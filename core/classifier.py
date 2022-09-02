@@ -1,4 +1,3 @@
-import json
 import math
 from typing import Optional
 
@@ -11,11 +10,6 @@ from sklearn.svm import SVC
 
 from core.files import Data, LinkedFaqEntry
 from core.views import AutoResponseView
-
-
-def save(data: dict):
-    with open("data.json", 'w') as f:
-        json.dump(data, f, indent=4)
 
 
 class AutoFaq:
@@ -120,9 +114,9 @@ class AutoFaq:
 
     def apply_vote(self, answer_id: int, vote: int):
         if vote > 0:
-            self.vote_up(answer_id)
+            self.data.faq_entry(answer_id).vote_up()
         elif vote < 0:
-            self.vote_down(answer_id)
+            self.data.faq_entry(answer_id).vote_down()
 
     def __calculate_threshold__(self, answer_id: int) -> Optional[float]:
         entry = self.data.faq_entry(answer_id)
@@ -135,12 +129,6 @@ class AutoFaq:
 
         ratio = importance * entry.up_votes() / entry.votes() + (1 - importance) * 0.5  # bad 0 - good 1
         return ratio * self.min_threshold + (1 - ratio) * self.max_threshold
-
-    def vote_up(self, answer_id: int):
-        self.data.faq_entry(answer_id).vote_up()
-
-    def vote_down(self, answer_id: int):
-        self.data.faq_entry(answer_id).vote_down()
 
     async def add_message_by_short(self, command: nextcord.Message, referenced: nextcord.Message,
                                    answer_abbreviation: str):
