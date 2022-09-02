@@ -13,15 +13,16 @@ from core.views import AutoResponseView
 
 
 class AutoFaq:
-    def __init__(self, bot: Bot, test_split: Optional[float] = None, min_threshold: float = 0.7,
+    def __init__(self, bot: Bot, topic: str, test_split: Optional[float] = None, min_threshold: float = 0.7,
                  max_threshold: float = 0.9, random_state: int = None):
         self.bot = bot
+        self.topic = topic
         self.test_split = test_split
         self.min_threshold = min_threshold
         self.max_threshold = max_threshold
         self.random_state = random_state
 
-        self.data = Data()
+        self.data = Data(topic)
         self.classifier: Optional[SVC] = None
         self.vectorizer: Optional[CountVectorizer] = None
 
@@ -37,7 +38,7 @@ class AutoFaq:
             for value in y_test:
                 sample_weight.append(1 - class_weights[value])
 
-            print("Score:", self.classifier.score(X_test, y_test, sample_weight=sample_weight))
+            print(f"Score in topic {self.topic}:", self.classifier.score(X_test, y_test, sample_weight=sample_weight))
 
     def __load_vectorizer__(self, sentences_train, sentences_test) -> (np.ndarray, np.ndarray):
         self.vectorizer = CountVectorizer()

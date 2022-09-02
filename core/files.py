@@ -31,34 +31,52 @@ class Config(File):
     def activated_channels(self) -> dict:
         return self.file["activated_channels"]
 
+    def topics(self):
+        topics = []
+        for key in self.activated_channels().keys():
+            nested: dict = self.activated_channels()[key]
+            for topic in nested.values():
+                if topic not in topics:
+                    topics.append(topic)
+        return topics
+
+    def get_topic(self, channel: nextcord.TextChannel) -> Optional[str]:
+        activated_channels: dict = self.activated_channels()
+        channels: dict = activated_channels.get(str(channel.guild.id))
+
+        if not channels:
+            return None
+
+        return channels.get(str(channel.id))
+
     def is_channel_activated(self, channel: nextcord.TextChannel) -> bool:
         activated_channels: dict = self.activated_channels()
         channels: list = activated_channels.get(str(channel.guild.id))
         return channels is not None and channel.id in channels
 
-    def enable_channel(self, channel: nextcord.TextChannel) -> bool:
+    def enable_channel(self, channel: nextcord.TextChannel, topic: str) -> bool:
         activated_channels: dict = self.activated_channels()
-        channels: list = activated_channels.get(str(channel.guild.id))
+        channels: dict = activated_channels.get(str(channel.guild.id))
 
         if not channels:
-            channels = []
+            channels = {}
             activated_channels[str(channel.guild.id)] = channels
 
-        if channel.id in channels:
+        if str(channel.id) in channels:
             return False
 
-        channels.append(channel.id)
+        channels[str(channel.id)] = topic
         self.save()
         return True
 
     def disable_channel(self, channel: nextcord.TextChannel) -> bool:
         activated_channels: dict = self.activated_channels()
-        channels: list = activated_channels.get(str(channel.guild.id))
+        channels: dict = activated_channels.get(str(channel.guild.id))
 
-        if not channels or channel.id not in channels:
+        if not channels or str(channel.id) not in channels:
             return False
 
-        channels.remove(channel.id)
+        channels.pop(str(channel.id))
         if len(channels) == 0:
             activated_channels.pop(str(channel.guild.id))
 
@@ -112,12 +130,19 @@ class LinkedFaqEntry(FaqEntry):
 
 
 class Data(File):
-    def __init__(self):
+    def __init__(self, topic: str):
         super(Data, self).__init__("data")
+        self.topic = topic
         self.__repair_messages__()
 
     def faq(self) -> list[dict]:
-        return self.file["faq"]
+        topics: dict = self.file["faq"]
+        faq = topics.get(self.topic)
+
+        if faq:
+            return faq
+        else:
+            return []
 
     def linked_faq(self) -> list[LinkedFaqEntry]:
         entries = []
