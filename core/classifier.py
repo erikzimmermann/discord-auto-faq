@@ -207,3 +207,12 @@ class AutoFaq:
 
         self.data.add_faq_entry(answer, short)
         return True
+
+
+store: Optional[Store] = None
+
+
+def setup(s: Store) -> Store:
+    global store
+    store = s
+    return s
