@@ -1,13 +1,17 @@
 import nextcord
 from nextcord import SlashOption
-from nextcord.ext import commands
+from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
 from core.classifier import Store, AutoFaq
 
 
-class FaqConfig(commands.Cog):
-    def __init__(self, bot: commands.Bot, store: Store):
+async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
+    await interaction.response.send_autocomplete(core.classifier.store.config.topics())
+
+
+class FaqConfig(Cog):
+    def __init__(self, bot: Bot, store: Store):
         self.bot = bot
         self.store = store
 
@@ -16,17 +20,9 @@ class FaqConfig(commands.Cog):
         self.store.load_classifiers()
         await interaction.send("The FAQ has been reloaded.", ephemeral=True)
 
-    async def check_topic(self, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
-        await interaction.response.send_autocomplete(self.store.config.topics())
-
     @nextcord.slash_command(description="Adds an automated answer to the FAQ.",
-                            dm_permission=False,
-                            guild_ids=[932268427333210142])
+                            dm_permission=False)
     async def faq_add(self, interaction: nextcord.Interaction,
-                      topic: str = SlashOption(description="This defines the topic this FAQ entry will be created in.",
-                                               required=True,
-                                               autocomplete=True,
-                                               autocomplete_callback=check_topic),
                       abbreviation: str = SlashOption(
                           description="This abbreviation will be used to add more message to "
                                       "the dataset and print FAQ answers for users.",
@@ -36,7 +32,11 @@ class FaqConfig(commands.Cog):
                       answer: str = SlashOption(description="The formatted answer that will be send to users.",
                                                 min_length=10,
                                                 max_length=500,
-                                                required=True)):
+                                                required=True),
+                      topic: str = SlashOption(description="This defines the topic this FAQ entry will be created in.",
+                                               required=True,
+                                               autocomplete=True,
+                                               autocomplete_callback=autocomplete_topic)):
         abbreviation = abbreviation.lower().strip()
         word_count = len(abbreviation.split(" "))
         if word_count != 1:
@@ -54,5 +54,5 @@ class FaqConfig(commands.Cog):
             await interaction.send(f"Your answer *{answer}* was created. Short: *{abbreviation}*", ephemeral=True)
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Bot):
     bot.add_cog(FaqConfig(bot, core.classifier.store))

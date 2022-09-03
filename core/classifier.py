@@ -8,9 +8,9 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 
+from core.files import Config
 from core.files import Data, LinkedFaqEntry
 from core.ui import AutoResponseView
-from core.files import Config
 
 
 class Store:
@@ -23,8 +23,7 @@ class Store:
         self.classifiers = {}
 
         for topic in self.config.topics():
-            # test score
-            AutoFaq(self.bot, topic, test_split=0.3, random_state=42)
+            AutoFaq(self.bot, topic, test_split=0.3, random_state=42)  # test score
             self.classifiers[topic] = AutoFaq(self.bot, topic)
 
 
@@ -97,13 +96,11 @@ class AutoFaq:
 
         word_count = len(message.split(" "))
         if word_count < 3:
-            print("count", word_count)
             return
 
         message = self.data.clean_message(reply_on.content)
 
         if len(message) == 0:
-            print("length", 0)
             return
 
         print(message)

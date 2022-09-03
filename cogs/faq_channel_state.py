@@ -12,7 +12,8 @@ class FaqChannel(commands.Cog):
         self.store = store
 
     @nextcord.slash_command(
-        description="Enables the auto FAQ to listen to the channel where this command will be executed.", dm_permission=False)
+        description="Enables the auto FAQ to listen to the channel where this command will be executed.",
+        dm_permission=False)
     async def faq_enable(self, interaction: nextcord.Interaction,
                          topic: str = SlashOption(description="The topic name will be used to link FAQ entries to it.",
                                                   required=True)):

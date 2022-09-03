@@ -1,11 +1,16 @@
 import nextcord
-from nextcord.ext import commands
+from nextcord import SlashOption
+from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
 from core.classifier import Store, AutoFaq
 
 
-class DataInfo(commands.Cog):
+async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
+    await interaction.response.send_autocomplete(core.classifier.store.config.topics())
+
+
+class DataInfo(Cog):
     @nextcord.slash_command(description="Prints the chat formatted as nonsense in the console.",
                             default_member_permissions=nextcord.Permissions(administrator=True), dm_permission=False)
     async def nonsense(self, interaction: nextcord.Interaction, message_count: int) -> None:
@@ -25,14 +30,18 @@ class DataInfo(commands.Cog):
         print(content)
 
 
-class FaqInfo(commands.Cog):
-    def __init__(self, bot: commands.Bot, store: Store):
+class FaqInfo(Cog):
+    def __init__(self, bot: Bot, store: Store):
         self.bot = bot
         self.store = store
 
     @nextcord.slash_command(description="Shows the abbreviations of every FAQ message.",
                             dm_permission=False)
-    async def faq(self, interaction: nextcord.Interaction, topic: str):
+    async def faq(self, interaction: nextcord.Interaction,
+                  topic: str = SlashOption(description="This defines the topic this FAQ entry will be created in.",
+                                           required=True,
+                                           autocomplete=True,
+                                           autocomplete_callback=autocomplete_topic)):
         classifier: AutoFaq = self.store.classifiers.get(topic)
 
         if not classifier:
@@ -48,6 +57,6 @@ class FaqInfo(commands.Cog):
         await interaction.send(response, ephemeral=True)
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Bot):
     bot.add_cog(DataInfo())
     bot.add_cog(FaqInfo(bot, core.classifier.store))
