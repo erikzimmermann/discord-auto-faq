@@ -1,10 +1,12 @@
 import re
 
 import nextcord
+from nextcord import SlashOption
 from nextcord.ext import commands
 
-from core.classifier import AutoFaq
+from core.classifier import AutoFaq, Store
 from core.files import Config
+from core.ui import FaqAddModal
 
 config: Config = Config()
 
@@ -13,17 +15,7 @@ intents.message_content = True
 
 activity = nextcord.Activity(type=nextcord.ActivityType.playing, name="Support Buddy (BETA)")
 bot = commands.Bot(intents=intents, activity=activity)
-classifiers: dict = {}
-
-
-def load_classifiers():
-    global classifiers
-    classifiers = {}
-
-    for topic in config.topics():
-        # test score
-        AutoFaq(bot, topic, test_split=0.3, random_state=42)
-        classifiers[topic] = AutoFaq(bot, topic)
+store = Store(bot)
 
 
 @bot.event
@@ -35,7 +27,7 @@ async def on_message(message: nextcord.Message):
     if not topic:
         return
 
-    classifier: AutoFaq = classifiers[topic]
+    classifier: AutoFaq = store.classifiers[topic]
 
     if has_permission(message.author) and bot.user in message.mentions:
         content = re.sub('<@[0-9]*>', '', message.content.lower())
@@ -56,13 +48,25 @@ async def on_message(message: nextcord.Message):
 
 @bot.slash_command(description="Enables the auto FAQ to listen to the channel where this command will be executed.",
                    default_member_permissions=nextcord.Permissions(use_slash_commands=True), dm_permission=False)
-async def faq_enable(interaction: nextcord.Interaction, topic: str):
+async def faq_enable(interaction: nextcord.Interaction,
+                     topic: str = SlashOption(description="The topic name will be used to link FAQ entries to it.",
+                                              required=True)):
     if not isinstance(interaction.channel, nextcord.TextChannel):
         return
 
     topic = topic.lower().strip()
+
+    no_data = store.classifiers.get(topic) is None
+
     if config.enable_channel(interaction.channel, topic):
-        await interaction.send(f"AutoFAQ with the topic *{topic}* is now activated for this channel.", ephemeral=True)
+        if no_data:
+            await interaction.send(
+                f"AutoFAQ with the topic *{topic}* is now activated for this channel. "
+                f"For now, this topic has **no FAQ entries**. Fill your FAQ with `/faq_add`.",
+                ephemeral=True)
+        else:
+            await interaction.send(f"AutoFAQ with the topic *{topic}* is now activated for this channel.",
+                                   ephemeral=True)
     else:
         await interaction.send("AutoFAQ is already activated for this channel.", ephemeral=True)
 
@@ -79,19 +83,34 @@ async def faq_disable(interaction: nextcord.Interaction):
         await interaction.send("AutoFAQ is not activated for this channel.", ephemeral=True)
 
 
-@bot.slash_command(description="Adds an automated answer to the FAQ.",
-                   default_member_permissions=nextcord.Permissions(use_slash_commands=True), dm_permission=False)
-async def faq_add(interaction: nextcord.Interaction, topic: str, abbreviation: str, answer: str):
-    if len(abbreviation) == 0 or len(answer) == 0:
-        await interaction.send(f"Your answer or its abbreviation is too short.", ephemeral=True)
+async def check_topic(interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
+    await interaction.response.send_autocomplete(store.config.topics())
 
+
+@bot.slash_command(description="Adds an automated answer to the FAQ.",
+                   default_member_permissions=nextcord.Permissions(use_slash_commands=True), dm_permission=False,
+                   guild_ids=[932268427333210142])
+async def faq_add(interaction: nextcord.Interaction,
+                  topic: str = SlashOption(description="This defines the topic this FAQ entry will be created in.",
+                                           required=True,
+                                           autocomplete=True,
+                                           autocomplete_callback=check_topic),
+                  abbreviation: str = SlashOption(description="This abbreviation will be used to add more message to "
+                                                              "the dataset and print FAQ answers for users.",
+                                                  min_length=2,
+                                                  max_length=15,
+                                                  required=True),
+                  answer: str = SlashOption(description="The formatted answer that will be send to users.",
+                                            min_length=10,
+                                            max_length=500,
+                                            required=True)):
     abbreviation = abbreviation.lower().strip()
     word_count = len(abbreviation.split(" "))
     if word_count != 1:
         await interaction.send(f"Your abbreviation cannot be longer than one word.", ephemeral=True)
         return
 
-    classifier: AutoFaq = classifiers.get(topic)
+    classifier: AutoFaq = store.classifiers.get(topic)
 
     if not classifier:
         await interaction.send(f"This topic does not exist. You have to enable a topic by using `/faq_enable`.",
@@ -102,17 +121,43 @@ async def faq_add(interaction: nextcord.Interaction, topic: str, abbreviation: s
         await interaction.send(f"Your answer *{answer}* was created. Short: *{abbreviation}*", ephemeral=True)
 
 
+# @bot.slash_command(description="Adds an automated answer to the FAQ.",
+#                    default_member_permissions=nextcord.Permissions(use_slash_commands=True), dm_permission=False)
+# async def faq_add(interaction: nextcord.Interaction):
+#     await interaction.response.send_modal(FaqAddModal(config.topics(), process_faq_add))
+
+
+async def process_faq_add(interaction: nextcord.Interaction, modal: FaqAddModal):
+    abbreviation = modal.abbreviation.value.lower().strip()
+    word_count = len(abbreviation.split(" "))
+    if word_count != 1:
+        await interaction.send(f"Your abbreviation cannot be longer than one word.", ephemeral=True)
+        return
+
+    topic = modal.topic.values[0]  # we made sure that we exactly have to select one option
+    classifier: AutoFaq = store.classifiers.get(topic)
+
+    if not classifier:
+        await interaction.send(f"This topic does not exist. You have to enable a topic by using `/faq_enable`.",
+                               ephemeral=True)
+        return
+
+    answer = modal.answer.value
+    if await classifier.create_answer(answer, abbreviation, interaction):
+        await interaction.send(f"Your answer *{answer}* was created. Short: *{abbreviation}*", ephemeral=True)
+
+
 @bot.slash_command(description="Reloads the FAQ from its files.",
                    default_member_permissions=nextcord.Permissions(administrator=True), dm_permission=False)
 async def faq_reload(interaction: nextcord.Interaction):
-    load_classifiers()
+    store.load_classifiers()
     await interaction.send("The FAQ has been reloaded.", ephemeral=True)
 
 
 @bot.slash_command(description="Shows the abbreviations of every FAQ message.",
                    default_member_permissions=nextcord.Permissions(use_slash_commands=True), dm_permission=False)
 async def faq(interaction: nextcord.Interaction, topic: str):
-    classifier: AutoFaq = classifiers.get(topic)
+    classifier: AutoFaq = store.classifiers.get(topic)
 
     if not classifier:
         await interaction.send(f"This topic does not exist. You have to enable a topic by using `/faq_enable`.",
@@ -143,7 +188,7 @@ async def nonsense(interaction: nextcord.Interaction, message_count: int):
 async def process_add(topic: str, message: nextcord, short: str):
     ref: nextcord.MessageReference = message.reference
     fetched: nextcord.Message = await message.channel.fetch_message(ref.message_id)
-    await classifiers[topic].add_message_by_short(message, fetched, short)
+    await store.classifiers[topic].add_message_by_short(message, fetched, short)
 
 
 def get_role_position(user: nextcord.Member) -> int:
@@ -161,5 +206,5 @@ def has_permission(user: nextcord.Member) -> bool:
 
 
 print("starting")
-load_classifiers()
+store.load_classifiers()
 bot.run(config.token())

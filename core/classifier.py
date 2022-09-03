@@ -9,7 +9,23 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 
 from core.files import Data, LinkedFaqEntry
-from core.views import AutoResponseView
+from core.ui import AutoResponseView
+from core.files import Config
+
+
+class Store:
+    def __init__(self, bot: nextcord.ext.commands.Bot):
+        self.classifiers: dict = {}
+        self.config = Config()
+        self.bot = bot
+
+    def load_classifiers(self) -> None:
+        self.classifiers = {}
+
+        for topic in self.config.topics():
+            # test score
+            AutoFaq(self.bot, topic, test_split=0.3, random_state=42)
+            self.classifiers[topic] = AutoFaq(self.bot, topic)
 
 
 class AutoFaq:
@@ -28,7 +44,10 @@ class AutoFaq:
 
         self.__load__()
 
-    def __load__(self):
+    def __load__(self) -> None:
+        if not self.data.is_valid():
+            return
+
         sentences_train, sentences_test, y_train, y_test, class_weights = self.__get_data__()
         X_train, X_test = self.__load_vectorizer__(sentences_train, sentences_test)
         self.__load_classifier__(X_train, y_train)
@@ -44,7 +63,7 @@ class AutoFaq:
         self.vectorizer = CountVectorizer()
         return self.vectorizer.fit_transform(sentences_train), self.vectorizer.transform(sentences_test)
 
-    def __load_classifier__(self, X_train: np.ndarray, y_train: np.ndarray):
+    def __load_classifier__(self, X_train: np.ndarray, y_train: np.ndarray) -> None:
         self.classifier = SVC(probability=True, class_weight="balanced", random_state=self.random_state)
         self.classifier.fit(X_train, y_train)
 
@@ -67,10 +86,13 @@ class AutoFaq:
                                                                             shuffle=True)
         return sentences_train, sentences_test, y_train, y_test, class_weights
 
-    def __refit__(self):
+    def __refit__(self) -> None:
         self.__load__()
 
     async def check_message(self, reply_on: nextcord.Message) -> (Optional[str], Optional[AutoResponseView]):
+        if self.classifier is None:
+            return
+
         message = reply_on.content
 
         word_count = len(message.split(" "))
@@ -105,7 +127,7 @@ class AutoFaq:
         if p.max() >= threshold:
             await self.send_faq(reply_on, answer_id, entry.answer(), True)
 
-    async def send_faq(self, reply_on: nextcord.Message, answer_id: int, answer: str, allow_feedback: bool):
+    async def send_faq(self, reply_on: nextcord.Message, answer_id: int, answer: str, allow_feedback: bool) -> None:
         if allow_feedback:
             view = AutoResponseView(reply_on.author, lambda vote: self.apply_vote(answer_id, vote))
             response = await reply_on.reply(answer, view=view)
@@ -113,7 +135,7 @@ class AutoFaq:
         else:
             await reply_on.reply(answer)
 
-    def apply_vote(self, answer_id: int, vote: int):
+    def apply_vote(self, answer_id: int, vote: int) -> None:
         if vote > 0:
             self.data.faq_entry(answer_id).vote_up()
         elif vote < 0:
@@ -132,7 +154,7 @@ class AutoFaq:
         return ratio * self.min_threshold + (1 - ratio) * self.max_threshold
 
     async def add_message_by_short(self, command: nextcord.Message, referenced: nextcord.Message,
-                                   answer_abbreviation: str):
+                                   answer_abbreviation: str) -> None:
         content = self.data.clean_message(referenced.content)
         if len(content) == 0:
             await command.add_reaction("🤔")

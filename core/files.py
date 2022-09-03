@@ -12,11 +12,11 @@ class File:
         self.file_name = file_name
         self.load()
 
-    def load(self):
+    def load(self) -> None:
         with open(f"{self.file_name}.json", 'r') as f:
             self.file: dict = json.load(f)
 
-    def save(self):
+    def save(self) -> None:
         with open(f"{self.file_name}.json", 'w') as f:
             json.dump(self.file, f, indent=4)
 
@@ -31,7 +31,7 @@ class Config(File):
     def activated_channels(self) -> dict:
         return self.file["activated_channels"]
 
-    def topics(self):
+    def topics(self) -> list[str]:
         topics = []
         for key in self.activated_channels().keys():
             nested: dict = self.activated_channels()[key]
@@ -105,7 +105,7 @@ class FaqEntry:
     def up_votes(self) -> int:
         return self.data["up_votes"]
 
-    def vote_up(self):
+    def vote_up(self) -> None:
         self.data["up_votes"] += 1
         self.file.save()
 
@@ -115,7 +115,7 @@ class FaqEntry:
     def votes(self) -> int:
         return self.up_votes() + self.down_votes()
 
-    def vote_down(self):
+    def vote_down(self) -> None:
         self.data["down_votes"] += 1
         self.file.save()
 
@@ -143,6 +143,9 @@ class Data(File):
             return faq
         else:
             return []
+
+    def is_valid(self) -> bool:
+        return len(self.faq()) > 0
 
     def linked_faq(self) -> list[LinkedFaqEntry]:
         entries = []
@@ -178,7 +181,7 @@ class Data(File):
             entry_id += 1
         return None
 
-    def add_faq_entry(self, answer: str, short: str):
+    def add_faq_entry(self, answer: str, short: str) -> None:
         entry: dict = {
             "messages": [],
             "answer": answer,
@@ -196,14 +199,14 @@ class Data(File):
     def nonsense(self) -> list[str]:
         return self.file["nonsense"]
 
-    def add_nonsense(self, text: str):
+    def add_nonsense(self, text: str) -> None:
         if text in self.nonsense():
             return
 
         self.nonsense().append(text)
         self.save()
 
-    def __repair_messages__(self):
+    def __repair_messages__(self) -> None:
         changed = False
 
         for e in self.faq():
