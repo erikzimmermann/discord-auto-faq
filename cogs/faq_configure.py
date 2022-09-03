@@ -11,8 +11,7 @@ class FaqConfig(commands.Cog):
         self.bot = bot
         self.store = store
 
-    @nextcord.slash_command(description="Reloads the FAQ from its files.",
-                            default_member_permissions=nextcord.Permissions(administrator=True), dm_permission=False)
+    @nextcord.slash_command(description="Reloads the FAQ from its files.", dm_permission=False)
     async def faq_reload(self, interaction: nextcord.Interaction):
         self.store.load_classifiers()
         await interaction.send("The FAQ has been reloaded.", ephemeral=True)
@@ -21,7 +20,6 @@ class FaqConfig(commands.Cog):
         await interaction.response.send_autocomplete(self.store.config.topics())
 
     @nextcord.slash_command(description="Adds an automated answer to the FAQ.",
-                            default_member_permissions=nextcord.Permissions(use_slash_commands=True),
                             dm_permission=False,
                             guild_ids=[932268427333210142])
     async def faq_add(self, interaction: nextcord.Interaction,

@@ -31,7 +31,6 @@ class FaqInfo(commands.Cog):
         self.store = store
 
     @nextcord.slash_command(description="Shows the abbreviations of every FAQ message.",
-                            default_member_permissions=nextcord.Permissions(use_slash_commands=True),
                             dm_permission=False)
     async def faq(self, interaction: nextcord.Interaction, topic: str):
         classifier: AutoFaq = self.store.classifiers.get(topic)
