@@ -21,6 +21,6 @@ for fn in os.listdir("./cogs"):
     if fn.endswith(".py"):
         bot.load_extension(f"cogs.{fn[:-3]}")
 
-print("starting")
+print("Bot is ready! - @Pterodactyl")
 store.load_classifiers()
 bot.run(config.token())
