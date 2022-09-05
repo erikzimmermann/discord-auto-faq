@@ -8,8 +8,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 
-from core.files import Config
-from core.files import Data, LinkedFaqEntry
+from core.files import Config, Data, LinkedFaqEntry
 from core.ui import AutoResponseView
 
 
@@ -85,43 +84,47 @@ class AutoFaq:
                                                                             shuffle=True)
         return sentences_train, sentences_test, y_train, y_test, class_weights
 
-    def __refit__(self) -> None:
+    def refit(self) -> None:
+        self.data = Data(self.topic)
         self.__load__()
 
-    async def check_message(self, reply_on: nextcord.Message) -> (Optional[str], Optional[AutoResponseView]):
+    def predict(self, message: str) -> (Optional[int], int):
         if self.classifier is None:
-            return
-
-        message = reply_on.content
+            return None, None
 
         word_count = len(message.split(" "))
         if word_count < 3:
-            return
+            return None, None
 
-        message = self.data.clean_message(reply_on.content)
+        message = self.data.clean_message(message)
 
         if len(message) == 0:
-            return
+            return None, None
 
-        print(message)
         vector = self.vectorizer.transform([message]).toarray()[0]
 
         p = self.classifier.predict_proba([vector])
-        class_idx = p.argmax()
+        argmax = p.argmax()
+        class_idx = argmax - 1 if argmax > 0 else None
 
-        print("max", p.max(), class_idx)
+        return class_idx, p.max()
 
-        if class_idx == 0:
+    async def check_message(self, reply_on: nextcord.Message) -> (Optional[str], Optional[AutoResponseView]):
+        answer_id, p = self.predict(reply_on.content)
+
+        print(reply_on.content)
+        print("max", p, answer_id)
+
+        if answer_id is None:
             # message classified as nonsense
             return
 
         # change class index to answer_id
-        answer_id = class_idx - 1
         entry = self.data.faq_entry(answer_id)
 
         threshold = self.__calculate_threshold__(answer_id)
         print("threshold", threshold)
-        if p.max() >= threshold:
+        if p >= threshold:
             await self.send_faq(reply_on, answer_id, entry.answer(), True)
 
     async def send_faq(self, reply_on: nextcord.Message, answer_id: int, answer: str, allow_feedback: bool) -> None:
@@ -161,7 +164,7 @@ class AutoFaq:
 
         if answer_abbreviation == "ignore":
             self.data.add_nonsense(content)
-            self.__refit__()
+            self.refit()
 
             # delete last message which replied to the referenced message
             async for old in command.channel.history(limit=20):
@@ -180,7 +183,7 @@ class AutoFaq:
         if entry:
             entry.add_message(content)
             await self.send_faq(referenced, message_id, entry.answer(), False)
-            self.__refit__()
+            self.refit()
             return
 
         await command.add_reaction("🤔")

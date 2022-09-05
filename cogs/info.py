@@ -4,6 +4,7 @@ from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
 from core.classifier import Store, AutoFaq
+from core.files import ChatData
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
@@ -55,6 +56,27 @@ class FaqInfo(Cog):
                 response += "\n"
             response += f"*{entry.short()}*: {entry.answer()}"
         await interaction.send(response, ephemeral=True)
+
+    @nextcord.slash_command(description="Prints the chat formatted as nonsense in the console.",
+                            default_member_permissions=nextcord.Permissions(administrator=True), dm_permission=False)
+    async def save_chat(self, interaction: nextcord.Interaction, message_count: int) -> None:
+        if not isinstance(interaction.channel, nextcord.TextChannel):
+            return
+
+        await interaction.send("Done", ephemeral=True)
+
+        content = []
+        count = 0
+        async for message in interaction.channel.history(limit=message_count):
+            content.append(message.content)
+
+            count += 1
+            if count % 250 == 0:
+                print(count)
+
+        print(content)
+        data = ChatData()
+        data.apply(content)
 
 
 def setup(bot: Bot):

@@ -8,17 +8,29 @@ import numpy as np
 
 class File:
     def __init__(self, file_name):
-        self.file = None
+        self.file: dict = Optional[None]
         self.file_name = file_name
         self.load()
 
     def load(self) -> None:
         with open(f"{self.file_name}.json", 'r') as f:
-            self.file: dict = json.load(f)
+            self.file = json.load(f)
 
     def save(self) -> None:
         with open(f"{self.file_name}.json", 'w') as f:
-            json.dump(self.file, f, indent=4)
+            json.dump(self.file, f, indent=2)
+
+
+class ChatData(File):
+    def __init__(self):
+        super(ChatData, self).__init__("chat_data")
+
+    def messages(self) -> list[str]:
+        return self.file["chat"]
+
+    def apply(self, messages: [str]):
+        self.file["chat"] = messages
+        self.save()
 
 
 class Config(File):
@@ -93,11 +105,14 @@ class FaqEntry:
         return self.data["messages"]
 
     def add_message(self, message: str) -> bool:
-        if message in self.messages():
+        if self.contains_message(message):
             return False
 
         self.messages().append(message)
         self.file.save()
+
+    def contains_message(self, message: str) -> bool:
+        return message in self.messages()
 
     def answer(self) -> str:
         return self.data["answer"]
@@ -199,8 +214,11 @@ class Data(File):
     def nonsense(self) -> list[str]:
         return self.file["nonsense"]
 
+    def contains_nonsense(self, text: str) -> bool:
+        return text in self.nonsense()
+
     def add_nonsense(self, text: str) -> None:
-        if text in self.nonsense():
+        if self.contains_nonsense(text):
             return
 
         self.nonsense().append(text)
@@ -256,11 +274,11 @@ class Data(File):
     def clean_message(self, message: str) -> str:
         message = message.lower()
         message = re.sub("[^a-z0-9 ]*", "", message)  # remove illegal characters
-        message = re.sub(r'\b[0-9]+\b', '', message)  # remove words only containing numbers (e.g. @ mentions)
+        message = re.sub(r"\b[0-9]+\b", "", message)  # remove words only containing numbers (e.g. @ mentions)
 
         for fill_word in self.fill_words():
-            message = re.sub(r'\b' + fill_word + r'\b', "", message)
+            message = re.sub(r"\b" + fill_word + r"\b", "", message)
 
-        message = re.sub(r' +', ' ', message)
+        message = re.sub(r" +", " ", message)
         message = message.strip()
         return message

@@ -74,5 +74,20 @@ class FaqAddModal(Modal):
                                 style=nextcord.TextInputStyle.paragraph)
         self.add_item(self.answer)
 
-    async def callback(self, interaction: nextcord.Interaction) -> None:
-        await self.callback(interaction)
+
+class FaqExpandView(View):
+    def __init__(self, callback: Callable):
+        super().__init__()
+        self.callback = callback
+
+    @nextcord.ui.button(label="Add to dataset", style=nextcord.ButtonStyle.success)
+    async def add(self, button: nextcord.Button, interaction: nextcord.Interaction) -> None:
+        await self.callback(0)
+
+    @nextcord.ui.button(label="Ignore", style=nextcord.ButtonStyle.gray)
+    async def ignore(self, button: nextcord.Button, interaction: nextcord.Interaction) -> None:
+        await self.callback(1)
+
+    @nextcord.ui.button(label="Skip", style=nextcord.ButtonStyle.red)
+    async def skip(self, button: nextcord.Button, interaction: nextcord.Interaction) -> None:
+        await self.callback(2)
