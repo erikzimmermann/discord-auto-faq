@@ -5,23 +5,40 @@ logger: logging.Logger = logging.getLogger('nextcord')
 
 
 class LoggingFormatter(logging.Formatter):
-    grey = "\x1b[38;20m"
-    yellow = "\x1b[33;20m"
-    red = "\x1b[31;20m"
+    blue = "\x1b[38;5;39m"
     bold_red = "\x1b[31;1m"
+    dark_gray = "\x1b[38;5;241m"
+    gray = "\x1b[38;5;15m"
+    red = "\x1b[31;20m"
     reset = "\x1b[0m"
-    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    yellow = "\x1b[33;20m"
 
-    FORMATS = {
-        logging.DEBUG: grey + format + reset,
-        logging.INFO: grey + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
-    }
+    def get_format(self, record: logging.LogRecord) -> str:
+        level = record.levelno
 
-    def format(self, record):
-        log_fmt = self.FORMATS.get(record.levelno)
+        color_primary = None
+        color_secondary = self.gray
+        color_less_important = self.dark_gray
+        color_message = self.gray
+
+        if level == logging.INFO:
+            color_primary = self.blue
+            if len(record.getMessage()) > 500:
+                color_message = self.dark_gray
+        elif level == logging.WARNING:
+            color_primary = color_message = self.yellow
+        elif level == logging.ERROR:
+            color_primary = color_message = self.red
+        elif level == logging.CRITICAL:
+            color_primary = color_message = self.bold_red
+
+        return f"{color_less_important}%(asctime)s{color_secondary} - " \
+               f"{color_less_important}%(name)s{color_secondary} - " \
+               f"{color_primary}%(levelname)s{color_secondary} - " \
+               f"{color_message}%(message)s{self.reset}"
+
+    def format(self, record: logging.LogRecord):
+        log_fmt = self.get_format(record)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
