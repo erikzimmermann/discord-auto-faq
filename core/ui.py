@@ -69,12 +69,22 @@ class FaqAddModal(Modal):
         # self.topic.add_option(label="test", default=True)
         self.add_item(self.topic)
 
-        self.abbreviation = TextInput(label="Abbreviation", required=True, min_length=2, max_length=15,
-                                      style=nextcord.TextInputStyle.short)
+        self.abbreviation = TextInput(
+            label="Abbreviation",
+            required=True,
+            min_length=2,
+            max_length=15,
+            style=nextcord.TextInputStyle.short
+        )
         self.add_item(self.abbreviation)
 
-        self.answer = TextInput(label="Answer", required=True, min_length=10, max_length=500,
-                                style=nextcord.TextInputStyle.paragraph)
+        self.answer = TextInput(
+            label="Answer",
+            required=True,
+            min_length=10,
+            max_length=500,
+            style=nextcord.TextInputStyle.paragraph
+        )
         self.add_item(self.answer)
 
 
@@ -104,15 +114,38 @@ class FaqEditModal(Modal):
         self.entry = entry
         self.data = data
 
-        self.short = TextInput(label="Abbreviation", required=True, min_length=2, max_length=15,
-                               style=nextcord.TextInputStyle.short,
-                               default_value=entry.short())
+        self.short = TextInput(
+            label="Abbreviation", required=True, min_length=2, max_length=15,
+            style=nextcord.TextInputStyle.short,
+            default_value=entry.short()
+        )
         self.add_item(self.short)
 
-        self.answer = TextInput(label="Answer", required=True, min_length=10, max_length=500,
-                                style=nextcord.TextInputStyle.paragraph,
-                                default_value=entry.answer())
+        self.answer = TextInput(
+            label="Answer", required=True, min_length=10, max_length=500,
+            style=nextcord.TextInputStyle.paragraph,
+            default_value=entry.answer()
+        )
         self.add_item(self.answer)
+
+    async def callback(self, interaction: Interaction):
+        await self.nested_callback(self, interaction)
+
+
+class FaqDeleteModal(Modal):
+    def __init__(self, topic: str, entry: LinkedFaqEntry, data: Data, callback: Callable):
+        super(FaqDeleteModal, self).__init__(f"FAQ Delete Confirmation: {topic}")
+        self.nested_callback = callback
+        self.topic = topic
+        self.entry = entry
+        self.data = data
+
+        self.short = TextInput(
+            label=f"Please type '{self.entry.short().upper()}' to confirm.",
+            max_length=15,
+            style=nextcord.TextInputStyle.short
+        )
+        self.add_item(self.short)
 
     async def callback(self, interaction: Interaction):
         await self.nested_callback(self, interaction)

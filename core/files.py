@@ -214,6 +214,10 @@ class Data(File):
         self.faq().append(entry)
         self.save()
 
+    def delete_faq_entry(self, entry: LinkedFaqEntry):
+        self.faq().pop(entry.id)
+        self.save()
+
     def fill_words(self) -> list[str]:
         return self.file["fill_words"]
 
