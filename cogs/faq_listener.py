@@ -1,7 +1,6 @@
 import re
 
 import nextcord
-from nextcord import SlashOption
 from nextcord.ext import commands
 
 import core.classifier
@@ -13,6 +12,10 @@ def get_role_position(user: nextcord.Member) -> int:
     for role in user.roles:
         max_pos = max(max_pos, role.position)
     return max_pos
+
+
+def has_permission(user: nextcord.Member) -> bool:
+    return user.guild_permissions.use_slash_commands
 
 
 class FaqListener(commands.Cog):
@@ -31,7 +34,7 @@ class FaqListener(commands.Cog):
 
         classifier: AutoFaq = self.store.classifiers[topic]
 
-        if self.has_permission(message.author) and self.bot.user in message.mentions:
+        if has_permission(message.author) and self.bot.user in message.mentions:
             content = re.sub('<@[0-9]*>', '', message.content.lower())
             short = content.strip()
 
@@ -51,12 +54,6 @@ class FaqListener(commands.Cog):
         ref: nextcord.MessageReference = message.reference
         fetched: nextcord.Message = await message.channel.fetch_message(ref.message_id)
         await self.store.classifiers[topic].add_message_by_short(message, fetched, short)
-
-    def has_permission(self, user: nextcord.Member) -> bool:
-        bot_member: nextcord.Member = user.guild.get_member(self.bot.user.id)
-        bot_pos = get_role_position(bot_member)
-        user_pos = get_role_position(user)
-        return bot_pos <= user_pos
 
 
 def setup(bot: commands.Bot):
