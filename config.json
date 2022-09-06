@@ -1,4 +1,6 @@
 {
-    "token": "<your token here>",
-    "activated_channels": {}
+  "token": "<your token here>",
+  "min_threshold": 0.3,
+  "max_threshold": 0.7,
+  "activated_channels": {}
 }
