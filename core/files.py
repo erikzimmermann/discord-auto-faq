@@ -49,6 +49,12 @@ class Config(File):
     def activated_channels(self) -> dict:
         return self.file["activated_channels"]
 
+    def min_threshold(self) -> float:
+        return self.file["min_threshold"]
+
+    def max_threshold(self) -> float:
+        return self.file["max_threshold"]
+
     def topics(self) -> list[str]:
         topics = []
         for key in self.activated_channels().keys():

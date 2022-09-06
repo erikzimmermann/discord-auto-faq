@@ -24,7 +24,12 @@ class Store:
 
         for topic in self.config.topics():
             AutoFaq(self.bot, topic, test_split=0.3, random_state=42)  # test score
-            self.classifiers[topic] = AutoFaq(self.bot, topic)
+            self.classifiers[topic] = AutoFaq(
+                self.bot,
+                topic,
+                min_threshold=self.config.min_threshold(),
+                max_threshold=self.config.max_threshold()
+            )
 
 
 class AutoFaq:
