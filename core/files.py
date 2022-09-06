@@ -137,6 +137,12 @@ class FaqEntry:
     def short(self) -> str:
         return self.data["short"]
 
+    def set_short(self, text: str):
+        self.data["short"] = text
+
+    def set_answer(self, text: str):
+        self.data["answer"] = text
+
 
 class LinkedFaqEntry(FaqEntry):
     def __init__(self, entry_id: int, data: dict, file: File):

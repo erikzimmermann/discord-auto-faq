@@ -4,10 +4,35 @@ from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
 from core.classifier import Store, AutoFaq
+from core.files import LinkedFaqEntry
+from core.ui import FaqEditModal
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
     await interaction.response.send_autocomplete(core.classifier.store.config.topics())
+
+
+async def faq_edit_callback(modal: FaqEditModal, interaction: nextcord.Interaction):
+    entry: LinkedFaqEntry = modal.entry
+    response = f"Following changes in topic *{modal.topic}* were saved:\n"
+    changed = False
+
+    if modal.short.value != entry.short():
+        response += f"Short: *{entry.short()}* -> *{modal.short.value}*"
+        entry.set_short(modal.short.value)
+        changed = True
+
+    if modal.answer.value != entry.answer():
+        response += f"Answer: \n{entry.answer()} \n-> \n{modal.answer.value}"
+        entry.set_answer(modal.answer.value)
+        changed = True
+
+    if not changed:
+        await interaction.send("No changes were made.", ephemeral=True)
+        return
+    else:
+        modal.data.save()
+        await interaction.send(response, ephemeral=True)
 
 
 class FaqConfig(Cog):
@@ -52,6 +77,33 @@ class FaqConfig(Cog):
 
         if await classifier.create_answer(answer, abbreviation, interaction):
             await interaction.send(f"Your answer *{answer}* was created. Short: *{abbreviation}*", ephemeral=True)
+
+    @nextcord.slash_command(description="Adds an automated answer to the FAQ.",
+                            dm_permission=False)
+    async def faq_edit(self, interaction: nextcord.Interaction,
+                       topic: str = SlashOption(description="This defines the topic this FAQ entry will be created in.",
+                                                required=True,
+                                                autocomplete=True,
+                                                autocomplete_callback=autocomplete_topic),
+                       abbreviation: str = SlashOption(
+                           description="The abbreviation of the FAQ entry.",
+                           required=True)):
+        abbreviation = abbreviation.lower().strip()
+        classifier: AutoFaq = self.store.classifiers.get(topic)
+
+        if not classifier:
+            await interaction.send(f"This topic does not exist. You have to enable a topic by using `/faq_enable`.",
+                                   ephemeral=True)
+            return
+
+        entry: LinkedFaqEntry = classifier.data.faq_entry_by_short(abbreviation)
+
+        if not entry:
+            await interaction.send(f"This topic does not exist. You have to enable a topic by using `/faq_enable`.",
+                                   ephemeral=True)
+            return
+
+        await interaction.response.send_modal(FaqEditModal(topic, entry, classifier.data, faq_edit_callback))
 
 
 def setup(bot: Bot):
