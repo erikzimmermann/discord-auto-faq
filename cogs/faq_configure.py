@@ -78,7 +78,7 @@ class FaqConfig(Cog):
         if await classifier.create_answer(answer, abbreviation, interaction):
             await interaction.send(f"Your answer *{answer}* was created. Short: *{abbreviation}*", ephemeral=True)
 
-    @nextcord.slash_command(description="Adds an automated answer to the FAQ.",
+    @nextcord.slash_command(description="Edits an FAQ entry.",
                             dm_permission=False)
     async def faq_edit(self, interaction: nextcord.Interaction,
                        topic: str = SlashOption(description="This defines the topic this FAQ entry will be created in.",

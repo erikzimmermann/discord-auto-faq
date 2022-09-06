@@ -57,7 +57,7 @@ class FaqInfo(Cog):
             response += f"*{entry.short()}*: {entry.answer()}"
         await interaction.send(response, ephemeral=True)
 
-    @nextcord.slash_command(description="Prints the chat formatted as nonsense in the console.",
+    @nextcord.slash_command(description="Saves the chat of the current channel to a file.",
                             default_member_permissions=nextcord.Permissions(administrator=True), dm_permission=False)
     async def save_chat(self, interaction: nextcord.Interaction, message_count: int) -> None:
         if not isinstance(interaction.channel, nextcord.TextChannel):
