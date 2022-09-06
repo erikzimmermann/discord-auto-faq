@@ -23,7 +23,8 @@ class FaqChannel(Cog):
                              description="This defines the topic this FAQ entry will be created in.",
                              required=True,
                              autocomplete=True,
-                             autocomplete_callback=autocomplete_topic)):
+                             autocomplete_callback=autocomplete_topic
+                         )):
         if not isinstance(interaction.channel, nextcord.TextChannel):
             return
 

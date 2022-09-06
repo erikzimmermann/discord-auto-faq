@@ -36,12 +36,14 @@ class FaqExpand(Cog):
                              description="The number of messages that should be loaded and read.",
                              min_value=1,
                              max_value=50000,
-                             required=True),
+                             required=True
+                         ),
                          topic: str = SlashOption(
                              description="This defines the topic this FAQ entry will be created in.",
                              required=True,
                              autocomplete=True,
-                             autocomplete_callback=autocomplete_topic)):
+                             autocomplete_callback=autocomplete_topic
+                         )):
         if self.classifier is not None:
             await interaction.send(f"Someone is already expanding the FAQ. Please wait until the process is finished.",
                                    ephemeral=True)

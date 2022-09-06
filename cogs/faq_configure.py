@@ -53,15 +53,20 @@ class FaqConfig(Cog):
                                       "the dataset and print FAQ answers for users.",
                           min_length=2,
                           max_length=15,
-                          required=True),
-                      answer: str = SlashOption(description="The formatted answer that will be send to users.",
-                                                min_length=10,
-                                                max_length=500,
-                                                required=True),
-                      topic: str = SlashOption(description="This defines the topic this FAQ entry will be created in.",
-                                               required=True,
-                                               autocomplete=True,
-                                               autocomplete_callback=autocomplete_topic)):
+                          required=True
+                      ),
+                      answer: str = SlashOption(
+                          description="The formatted answer that will be send to users.",
+                          min_length=10,
+                          max_length=500,
+                          required=True
+                      ),
+                      topic: str = SlashOption(
+                          description="This defines the topic this FAQ entry will be created in.",
+                          required=True,
+                          autocomplete=True,
+                          autocomplete_callback=autocomplete_topic
+                      )):
         abbreviation = abbreviation.lower().strip()
         word_count = len(abbreviation.split(" "))
         if word_count != 1:
@@ -81,13 +86,16 @@ class FaqConfig(Cog):
     @nextcord.slash_command(description="Edits an FAQ entry.",
                             dm_permission=False)
     async def faq_edit(self, interaction: nextcord.Interaction,
-                       topic: str = SlashOption(description="This defines the topic this FAQ entry will be created in.",
-                                                required=True,
-                                                autocomplete=True,
-                                                autocomplete_callback=autocomplete_topic),
+                       topic: str = SlashOption(
+                           description="The FAQ topic which should be altered.",
+                           required=True,
+                           autocomplete=True,
+                           autocomplete_callback=autocomplete_topic
+                       ),
                        abbreviation: str = SlashOption(
                            description="The abbreviation of the FAQ entry.",
-                           required=True)):
+                           required=True)
+                       ):
         abbreviation = abbreviation.lower().strip()
         classifier: AutoFaq = self.store.classifiers.get(topic)
 

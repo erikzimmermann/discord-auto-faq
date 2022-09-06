@@ -39,10 +39,12 @@ class FaqInfo(Cog):
     @nextcord.slash_command(description="Shows the abbreviations of every FAQ message.",
                             dm_permission=False)
     async def faq(self, interaction: nextcord.Interaction,
-                  topic: str = SlashOption(description="This defines the topic this FAQ entry will be created in.",
-                                           required=True,
-                                           autocomplete=True,
-                                           autocomplete_callback=autocomplete_topic)):
+                  topic: str = SlashOption(
+                      description="This defines the topic this FAQ entry will be created in.",
+                      required=True,
+                      autocomplete=True,
+                      autocomplete_callback=autocomplete_topic
+                  )):
         classifier: AutoFaq = self.store.classifiers.get(topic)
 
         if not classifier:
