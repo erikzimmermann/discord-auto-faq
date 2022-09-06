@@ -1,5 +1,7 @@
 {
   "token": "<your token here>",
+  "activity": "Support Buddy (BETA)",
+  "activity_type": 0,
   "min_threshold": 0.3,
   "max_threshold": 0.7,
   "activated_channels": {}

@@ -46,6 +46,12 @@ class Config(File):
     def token(self) -> str:
         return self.file["token"]
 
+    def activity(self) -> str:
+        return self.file["activity"]
+
+    def activity_type(self) -> int:
+        return self.file["activity_type"]
+
     def activated_channels(self) -> dict:
         return self.file["activated_channels"]
 

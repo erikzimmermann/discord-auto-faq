@@ -13,7 +13,7 @@ config: Config = Config()
 intents = nextcord.Intents.default()
 intents.message_content = True
 
-activity = nextcord.Activity(type=nextcord.ActivityType.playing, name="Support Buddy (BETA)")
+activity = nextcord.Activity(type=config.activity_type(), name=config.activity())
 bot = commands.Bot(intents=intents, activity=activity)
 store = core.classifier.setup(Store(bot))
 
