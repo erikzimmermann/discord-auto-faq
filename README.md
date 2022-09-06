@@ -5,24 +5,24 @@ This bot written in `python` makes use of a *machine learning* classifier to det
 As the administrator, you first have to create an FAQ topic by using `/faq_enable`. Then, you can create FAQ entries with `/faq_add` and fill them with messages which should be automatically answered with your FAQ.
 
 # Commands
-| **Command**  | **Description**                                                                                                                                                                                                  | **Permission** |
-|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|
-| /faq_enable  | Enables AutoFAQ for a Discord channel (and creates an FAQ topic).                                                                                                                                                | use_slash_commands              |
-| /faq_disable | Disables AutoFAQ for a Discord channel.                                                                                                                                                                          | use_slash_commands              |
-| /faq         | Shows all FAQ entries for a specific topic.                                                                                                                                                                      | use_slash_commands              |
-| /faq_add     | Creates an FAQ entry for a specific topic.                                                                                                                                                                       | use_slash_commands              |
-| /faq_edit    | Edits an FAQ entry for a specific topic.                                                                                                                                                                         | use_slash_commands              |
-| /faq_delete  | Deletes an FAQ entry for a specific topic.                                                                                                                                                                       | administrator  |
-| /faq_expand  | Searches for messages in a channel that would be classified as question and then asks the administrator whether this messages should be added to the FAQ entry dataset or ignored. This improves the classifier. | use_slash_commands              |
-| /faq_reload  | Reloads every classifier for each topic.                                                                                                                                                                         | use_slash_commands              |
-| /save_chat   | Saves `n` messages to a file to improve the non-question dataset to ignore irrelevant messages.                                                                                                                  | administrator  |
+| **Command**  | **Description**                                                                                                                                                                                                  | **Permission**     |
+|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|
+| /faq_enable  | Enables AutoFAQ for a Discord channel (and creates an FAQ topic).                                                                                                                                                | use_slash_commands |
+| /faq_disable | Disables AutoFAQ for a Discord channel.                                                                                                                                                                          | use_slash_commands |
+| /faq         | Shows all FAQ entries for a specific topic.                                                                                                                                                                      | use_slash_commands |
+| /faq_add     | Creates an FAQ entry for a specific topic.                                                                                                                                                                       | use_slash_commands |
+| /faq_edit    | Edits an FAQ entry for a specific topic.                                                                                                                                                                         | use_slash_commands |
+| /faq_delete  | Deletes an FAQ entry for a specific topic.                                                                                                                                                                       | administrator      |
+| /faq_expand  | Searches for messages in a channel that would be classified as question and then asks the administrator whether this messages should be added to the FAQ entry dataset or ignored. This improves the classifier. | use_slash_commands |
+| /faq_reload  | Reloads every classifier for each topic.                                                                                                                                                                         | use_slash_commands |
+| /save_chat   | Saves `n` messages to a file to improve the non-question dataset to ignore irrelevant messages.                                                                                                                  | administrator      |
 
 # In-Chat Commands
-| **Command**                 | **With reference to another message** | **Description**                                                                                                | **Permission**    |
-|-----------------------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------|-------------------|
+| **Command**                  | **With reference to another message** | **Description**                                                                                                | **Permission**     |
+|------------------------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------|--------------------|
 | @AutoFAQ \<faq-abbreviation> | Yes                                   | Posts the answer of your FAQ entry to the referenced message and adds the referenced message to your dataset.  | use_slash_commands |
 | @AutoFAQ \<faq-abbreviation> | No                                    | Posts the answer of your FAQ entry.                                                                            | use_slash_commands |
-| @AutoFAQ ignore             | Yes                                   | Adds the referenced message to the ignore-dataset and deletes any old FAQ response referenced to that message. | use_slash_commands |
+| @AutoFAQ ignore              | Yes                                   | Adds the referenced message to the ignore-dataset and deletes any old FAQ response referenced to that message. | use_slash_commands |
 
 # Requirements
 * Python installed
