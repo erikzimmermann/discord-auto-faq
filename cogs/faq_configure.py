@@ -6,6 +6,7 @@ import core.classifier
 from core.classifier import Store, AutoFaq
 from core.files import LinkedFaqEntry
 from core.ui import FaqEditModal, FaqDeleteModal
+import core.log as log
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
@@ -16,6 +17,7 @@ async def faq_edit_callback(modal: FaqEditModal, interaction: nextcord.Interacti
     entry: LinkedFaqEntry = modal.entry
     response = f"Following changes in topic *{modal.topic}* were saved:\n"
     changed = False
+    old_short = entry.short()
 
     if modal.short.value != entry.short():
         response += f"Short: *{entry.short()}* -> *{modal.short.value}*"
@@ -31,6 +33,9 @@ async def faq_edit_callback(modal: FaqEditModal, interaction: nextcord.Interacti
         await interaction.send("No changes were made.", ephemeral=True)
         return
     else:
+        log.info(f"The FAQ entry '{old_short}' has been edited",
+                 f"by {interaction.user.name}#{interaction.user.discriminator}.", response)
+
         modal.data.save()
         await interaction.send(response, ephemeral=True)
 
@@ -46,6 +51,10 @@ async def faq_delete_callback(modal: FaqEditModal, interaction: nextcord.Interac
         return
 
     modal.data.delete_faq_entry(entry)
+
+    log.info(f"The FAQ entry '{entry.short()}' has been deleted",
+             f"by {interaction.user.name}#{interaction.user.discriminator}. It's answer was: '{entry.answer()}'")
+
     await interaction.send(f"The FAQ entry *{entry.short()}* was **deleted** successfully.", ephemeral=True)
 
 
@@ -76,6 +85,7 @@ class FaqConfig(Cog):
     @nextcord.slash_command(description="Reloads the FAQ from its files.", dm_permission=False)
     async def faq_reload(self, interaction: nextcord.Interaction):
         self.store.load_classifiers()
+        log.info("All classifiers has been reloaded", f"by {interaction.user.name}#{interaction.user.discriminator}.")
         await interaction.send("The FAQ has been reloaded.", ephemeral=True)
 
     @nextcord.slash_command(description="Adds an automated answer to the FAQ.",
@@ -114,6 +124,8 @@ class FaqConfig(Cog):
             return
 
         if await classifier.create_answer(answer, abbreviation, interaction):
+            log.info(f"The FAQ entry '{abbreviation}' has been created",
+                     f"by {interaction.user.name}#{interaction.user.discriminator}. Answer: '{answer}'")
             await interaction.send(f"Your answer *{answer}* was created. Short: *{abbreviation}*", ephemeral=True)
 
     @nextcord.slash_command(description="Edits an FAQ entry.",

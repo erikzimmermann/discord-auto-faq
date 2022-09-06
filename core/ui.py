@@ -95,15 +95,15 @@ class FaqExpandView(View):
 
     @nextcord.ui.button(label="Add to dataset", style=nextcord.ButtonStyle.success)
     async def add(self, button: nextcord.Button, interaction: nextcord.Interaction) -> None:
-        await self.callback(0)
+        await self.callback(0, interaction)
 
     @nextcord.ui.button(label="Ignore", style=nextcord.ButtonStyle.gray)
     async def ignore(self, button: nextcord.Button, interaction: nextcord.Interaction) -> None:
-        await self.callback(1)
+        await self.callback(1, interaction)
 
     @nextcord.ui.button(label="Skip", style=nextcord.ButtonStyle.red)
     async def skip(self, button: nextcord.Button, interaction: nextcord.Interaction) -> None:
-        await self.callback(2)
+        await self.callback(2, interaction)
 
 
 class FaqEditModal(Modal):

@@ -4,6 +4,7 @@ from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
 from core.classifier import Store
+import core.log as log
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
@@ -33,6 +34,10 @@ class FaqChannel(Cog):
         no_data = self.store.classifiers.get(topic) is None
 
         if self.store.config.enable_channel(interaction.channel, topic):
+            log.info("AutoFAQ enabled for channel", f"'{interaction.channel.name}'",
+                     f"({interaction.channel.id}) in guild", f"'{interaction.guild.name}'",
+                     f"({interaction.guild.id})", f"by {interaction.user.name}#{interaction.user.discriminator}.")
+
             if no_data:
                 await interaction.send(
                     f"AutoFAQ with the topic *{topic}* is now activated for this channel. "
@@ -51,6 +56,10 @@ class FaqChannel(Cog):
             return
 
         if self.store.config.disable_channel(interaction.channel):
+            log.info("AutoFAQ disabled for channel", f"'{interaction.channel.name}'",
+                     f"({interaction.channel.id}) in guild", f"'{interaction.guild.name}'",
+                     f"({interaction.guild.id})", f"by {interaction.user.name}#{interaction.user.discriminator}.")
+
             await interaction.send("AutoFAQ is now disabled for this channel.", ephemeral=True)
         else:
             await interaction.send("AutoFAQ is not activated for this channel.", ephemeral=True)

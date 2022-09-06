@@ -4,6 +4,7 @@ from typing import Optional
 
 import nextcord
 import numpy as np
+import os
 
 
 class File:
@@ -13,8 +14,13 @@ class File:
         self.load()
 
     def load(self) -> None:
-        with open(f"{self.file_name}.json", 'r') as f:
-            self.file = json.load(f)
+        path = f"{self.file_name}.json"
+
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                self.file = json.load(f)
+        else:
+            self.file = {}
 
     def save(self) -> None:
         with open(f"{self.file_name}.json", 'w') as f:

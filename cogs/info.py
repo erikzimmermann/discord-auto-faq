@@ -11,26 +11,6 @@ async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction,
     await interaction.response.send_autocomplete(core.classifier.store.config.topics())
 
 
-class DataInfo(Cog):
-    @nextcord.slash_command(description="Prints the chat formatted as nonsense in the console.",
-                            default_member_permissions=nextcord.Permissions(administrator=True), dm_permission=False)
-    async def nonsense(self, interaction: nextcord.Interaction, message_count: int) -> None:
-        """
-            Useful to set up the nonsense class for the classifier.
-
-        :param interaction: The discord interaction.
-        :param message_count: The number of message that should be displayed.
-        """
-        if not isinstance(interaction.channel, nextcord.TextChannel):
-            return
-
-        content = []
-        async for message in interaction.channel.history(limit=message_count):
-            content.append(message.content)
-
-        print(content)
-
-
 class FaqInfo(Cog):
     def __init__(self, bot: Bot, store: Store):
         self.bot = bot
@@ -65,7 +45,7 @@ class FaqInfo(Cog):
         if not isinstance(interaction.channel, nextcord.TextChannel):
             return
 
-        await interaction.send("Done", ephemeral=True)
+        response = await interaction.send(f"Loading chat history 0/{message_count}...", ephemeral=True)
 
         content = []
         count = 0
@@ -74,13 +54,13 @@ class FaqInfo(Cog):
 
             count += 1
             if count % 250 == 0:
-                print(count)
+                await response.edit(f"Loading chat history {count}/{message_count}...")
 
-        print(content)
+        await response.edit(
+            f"Loading chat history {count}/{message_count}. Done.\nThe chat was saved in `chat_data.json`.")
         data = ChatData()
         data.apply(content)
 
 
 def setup(bot: Bot):
-    bot.add_cog(DataInfo())
     bot.add_cog(FaqInfo(bot, core.classifier.store))

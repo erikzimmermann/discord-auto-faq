@@ -10,6 +10,7 @@ import core.classifier
 from core.classifier import Store, AutoFaq
 from core.files import LinkedFaqEntry
 from core.ui import FaqExpandView
+import core.log as log
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
@@ -49,14 +50,15 @@ class FaqExpand(Cog):
                                    ephemeral=True)
             return
 
-        self.response = await interaction.send(f"Loading chat history 0/{chat_history_size}...",
-                                               ephemeral=True)
         self.classifier: AutoFaq = self.store.classifiers.get(topic)
 
         if not self.classifier:
             await interaction.send(f"This topic does not exist. You have to enable a topic by using `/faq_enable`.",
                                    ephemeral=True)
             return
+
+        self.response = await interaction.send(f"Loading chat history 0/{chat_history_size}...",
+                                               ephemeral=True)
 
         content = []
         count = 0
@@ -149,7 +151,7 @@ class FaqExpand(Cog):
                                  f"**Current topic:** *{classifier.data.faq_entry(category).short()}*\n\n"
                                  f"{message}", view=FaqExpandView(self.callback))
 
-    async def callback(self, decision: int) -> None:
+    async def callback(self, decision: int, interaction: nextcord.Interaction) -> None:
         messages = self.predictions[self.current_key]
         message = messages[self.current_message]
         cleaned = self.classifier.data.clean_message(message)
@@ -158,9 +160,13 @@ class FaqExpand(Cog):
             # add to dataset
             entry: LinkedFaqEntry = self.classifier.data.faq_entry(int(self.current_key))
             entry.add_message(cleaned)
+            log.info(f"The message '{message}' was added to the '{entry.short()}' dataset",
+                     f"by {interaction.user.name}#{interaction.user.discriminator}.")
         elif decision == 1:
             # add to ignored dataset
             self.classifier.data.add_nonsense(cleaned)
+            log.info(f"The message '{message}' was added to the nonsense dataset",
+                     f"by {interaction.user.name}#{interaction.user.discriminator}.")
 
         self.current_message += 1
         self.done += 1

@@ -10,6 +10,7 @@ from sklearn.svm import SVC
 
 from core.files import Config, Data, LinkedFaqEntry
 from core.ui import AutoResponseView
+import core.log as log
 
 
 class Store:
@@ -27,8 +28,8 @@ class Store:
 
 
 class AutoFaq:
-    def __init__(self, bot: Bot, topic: str, test_split: Optional[float] = None, min_threshold: float = 0.7,
-                 max_threshold: float = 0.9, random_state: int = None):
+    def __init__(self, bot: Bot, topic: str, test_split: Optional[float] = None, min_threshold: float = 0.3,
+                 max_threshold: float = 0.7, random_state: int = None):
         self.bot = bot
         self.topic = topic
         self.test_split = test_split
@@ -55,7 +56,8 @@ class AutoFaq:
             for value in y_test:
                 sample_weight.append(1 - class_weights[value])
 
-            print(f"Score in topic {self.topic}:", self.classifier.score(X_test, y_test, sample_weight=sample_weight))
+            score = self.classifier.score(X_test, y_test, sample_weight=sample_weight)
+            log.info(f"Classifier in topic {self.topic} loaded. Score:", round(score, 4))
 
     def __load_vectorizer__(self, sentences_train, sentences_test) -> (np.ndarray, np.ndarray):
         self.vectorizer = CountVectorizer()
@@ -112,18 +114,18 @@ class AutoFaq:
     async def check_message(self, reply_on: nextcord.Message) -> (Optional[str], Optional[AutoResponseView]):
         answer_id, p = self.predict(reply_on.content)
 
-        print(reply_on.content)
-        print("max", p, answer_id)
-
         if answer_id is None:
             # message classified as nonsense
+            log.info("Incoming message:", reply_on.content, "(nonsense" + (f", {round(p, 4)}" if p else "") + ")")
             return
 
         # change class index to answer_id
         entry = self.data.faq_entry(answer_id)
-
         threshold = self.__calculate_threshold__(answer_id)
-        print("threshold", threshold)
+
+        log.info("Incoming message:", reply_on.content,
+                 f"({entry.short()}, p={round(p, 4)}, threshold={threshold}, {p >= threshold})")
+
         if p >= threshold:
             await self.send_faq(reply_on, answer_id, entry.answer(), True)
 
@@ -166,6 +168,9 @@ class AutoFaq:
             self.data.add_nonsense(content)
             self.refit()
 
+            log.info(f"The message '{referenced.content}' was added to the nonsense dataset",
+                     f"by {command.author.name}#{command.author.discriminator}.")
+
             # delete last message which replied to the referenced message
             async for old in command.channel.history(limit=20):
                 member: nextcord.Member = old.author
@@ -181,7 +186,9 @@ class AutoFaq:
         entry = self.data.faq_entry_by_short(answer_abbreviation)
 
         if entry:
-            entry.add_message(content)
+            if entry.add_message(content):
+                log.info(f"The message '{referenced.content}' was added to the '{entry.short()}' dataset",
+                         f"by {command.author.name}#{command.author.discriminator}.")
             await self.send_faq(referenced, message_id, entry.answer(), False)
             self.refit()
             return
