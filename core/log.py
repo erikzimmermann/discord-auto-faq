@@ -12,8 +12,15 @@ class LoggingFormatter(logging.Formatter):
     red = "\x1b[31;20m"
     reset = "\x1b[0m"
     yellow = "\x1b[33;20m"
+    
+    def __init__(self, colors: bool = True):
+        super().__init__()
+        self.colors = colors
 
     def get_format(self, record: logging.LogRecord) -> str:
+        if not self.colors:
+            return "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        
         level = record.levelno
 
         color_primary = None
@@ -47,7 +54,7 @@ def load_logging_handlers() -> None:
     logger.setLevel(logging.INFO)
 
     handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='a')
-    handler.setFormatter(LoggingFormatter())
+    handler.setFormatter(LoggingFormatter(colors=False))
     logger.addHandler(handler)
 
     handler = logging.StreamHandler(sys.stdout)
