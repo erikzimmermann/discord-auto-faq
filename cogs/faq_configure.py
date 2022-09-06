@@ -135,6 +135,7 @@ class FaqConfig(Cog):
             await interaction.response.send_modal(FaqEditModal(topic, entry, classifier.data, faq_edit_callback))
 
     @nextcord.slash_command(description="Deletes an FAQ entry.",
+                            default_member_permissions=nextcord.Permissions(administrator=True),
                             dm_permission=False)
     async def faq_delete(self, interaction: nextcord.Interaction,
                          topic: str = SlashOption(
