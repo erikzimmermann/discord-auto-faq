@@ -1,13 +1,17 @@
 import nextcord
 from nextcord import SlashOption
-from nextcord.ext import commands
+from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
 from core.classifier import Store
 
 
-class FaqChannel(commands.Cog):
-    def __init__(self, bot: commands.Bot, store: Store):
+async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
+    await interaction.response.send_autocomplete(core.classifier.store.config.topics())
+
+
+class FaqChannel(Cog):
+    def __init__(self, bot: Bot, store: Store):
         self.bot = bot
         self.store = store
 
@@ -15,8 +19,11 @@ class FaqChannel(commands.Cog):
         description="Enables the auto FAQ to listen to the channel where this command will be executed.",
         dm_permission=False)
     async def faq_enable(self, interaction: nextcord.Interaction,
-                         topic: str = SlashOption(description="The topic name will be used to link FAQ entries to it.",
-                                                  required=True)):
+                         topic: str = SlashOption(
+                             description="This defines the topic this FAQ entry will be created in.",
+                             required=True,
+                             autocomplete=True,
+                             autocomplete_callback=autocomplete_topic)):
         if not isinstance(interaction.channel, nextcord.TextChannel):
             return
 
@@ -48,5 +55,5 @@ class FaqChannel(commands.Cog):
             await interaction.send("AutoFAQ is not activated for this channel.", ephemeral=True)
 
 
-def setup(bot: commands.Bot):
+def setup(bot: Bot):
     bot.add_cog(FaqChannel(bot, core.classifier.store))
