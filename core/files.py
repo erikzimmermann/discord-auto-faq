@@ -128,6 +128,7 @@ class FaqEntry:
 
         self.messages().append(message)
         self.file.save()
+        return True
 
     def contains_message(self, message: str) -> bool:
         return message in self.messages()
