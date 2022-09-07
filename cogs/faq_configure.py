@@ -85,7 +85,7 @@ class FaqConfig(Cog):
     @nextcord.slash_command(description="Reloads the FAQ from its files.", dm_permission=False)
     async def faq_reload(self, interaction: nextcord.Interaction):
         self.store.load_classifiers()
-        log.info("All classifiers has been reloaded", f"by {interaction.user.name}#{interaction.user.discriminator}.")
+        log.info("All classifiers have been reloaded", f"by {interaction.user.name}#{interaction.user.discriminator}.")
         await interaction.send("The FAQ has been reloaded.", ephemeral=True)
 
     @nextcord.slash_command(description="Adds an automated answer to the FAQ.",
