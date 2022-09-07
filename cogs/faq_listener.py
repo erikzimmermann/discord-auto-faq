@@ -34,21 +34,24 @@ class FaqListener(commands.Cog):
 
         classifier: AutoFaq = self.store.classifiers[topic]
 
-        if has_permission(message.author) and self.bot.user in message.mentions:
-            content = re.sub('<@[0-9]*>', '', message.content.lower())
-            short = content.strip()
+        if has_permission(message.author):
+            if self.bot.user in message.mentions:
+                content = re.sub('<@[0-9]*>', '', message.content.lower())
+                short = content.strip()
 
-            if message.reference:
-                await self.process_add(topic, message, short)
-            else:
-                entry = classifier.data.faq_entry_by_short(short)
-                if entry:
-                    await message.channel.send(entry.answer())
+                if message.reference:
+                    await self.process_add(topic, message, short)
                 else:
-                    await message.add_reaction("🤔")
-            return
-
-        await classifier.check_message(message)
+                    entry = classifier.data.faq_entry_by_short(short)
+                    if entry:
+                        await message.channel.send(entry.answer())
+                    else:
+                        await message.add_reaction("🤔")
+            else:
+                # just ignore message from staff members
+                pass
+        else:
+            await classifier.check_message(message)
 
     async def process_add(self, topic: str, message: nextcord, short: str):
         ref: nextcord.MessageReference = message.reference
