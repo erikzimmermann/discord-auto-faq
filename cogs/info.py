@@ -3,12 +3,12 @@ from nextcord import SlashOption
 from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
-from core.classifier import Store, AutoFaq
+from core.faq import Store, AutoFaq
 from core.files import ChatData
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
-    await interaction.response.send_autocomplete(core.classifier.store.config.topics())
+    await interaction.response.send_autocomplete(core.faq.store.config.topics())
 
 
 class FaqInfo(Cog):
@@ -63,4 +63,4 @@ class FaqInfo(Cog):
 
 
 def setup(bot: Bot):
-    bot.add_cog(FaqInfo(bot, core.classifier.store))
+    bot.add_cog(FaqInfo(bot, core.faq.store))

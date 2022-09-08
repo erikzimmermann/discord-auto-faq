@@ -7,14 +7,14 @@ from nextcord.ext.commands import Cog, Bot
 from nextcord.interactions import PartialInteractionMessage
 
 import core.classifier
-from core.classifier import Store, AutoFaq
+import core.log as log
+from core.faq import Store, AutoFaq
 from core.files import LinkedFaqEntry
 from core.ui import FaqExpandView
-import core.log as log
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
-    await interaction.response.send_autocomplete(core.classifier.store.config.topics())
+    await interaction.response.send_autocomplete(core.faq.store.config.topics())
 
 
 class FaqExpand(Cog):
@@ -22,7 +22,7 @@ class FaqExpand(Cog):
         self.bot = bot
         self.store = store
 
-        self.classifier: Optional[AutoFaq] = None
+        self.faq: Optional[AutoFaq] = None
         self.done: int = 0
         self.max_count: int = 0
         self.predictions: Optional[dict] = None
@@ -45,14 +45,14 @@ class FaqExpand(Cog):
                              autocomplete=True,
                              autocomplete_callback=autocomplete_topic
                          )):
-        if self.classifier is not None:
+        if self.faq is not None:
             await interaction.send(f"Someone is already expanding the FAQ. Please wait until the process is finished.",
                                    ephemeral=True)
             return
 
-        self.classifier: AutoFaq = self.store.classifiers.get(topic)
+        self.faq: AutoFaq = self.store.classifiers.get(topic)
 
-        if not self.classifier:
+        if not self.faq:
             await interaction.send(f"This topic does not exist. You have to enable a topic by using `/faq_enable`.",
                                    ephemeral=True)
             return
@@ -72,18 +72,18 @@ class FaqExpand(Cog):
         await self.response.edit(f"Loading chat history {chat_history_size}/{chat_history_size}. Done.")
 
         for c in reversed(content):
-            cleaned = self.classifier.data.clean_message(c)
-            for faq in self.classifier.data.linked_faq():
-                if faq.contains_message(cleaned):
+            cleaned = self.faq.data.clean_message(c)
+            for entry in self.faq.data.linked_faq():
+                if entry.contains_message(cleaned):
                     content.remove(c)
 
-            if self.classifier.data.contains_nonsense(cleaned):
+            if self.faq.data.contains_nonsense(cleaned):
                 content.remove(c)
 
         self.predictions = {}
         self.max_count = 0
         for c in content:
-            answer, p = self.classifier.predict(c)
+            answer, p = self.faq.classifier.predict(c)
             if answer is not None:
                 cat = self.predictions.get(str(answer))
                 if not cat:
@@ -101,9 +101,9 @@ class FaqExpand(Cog):
         await self.response.edit(f"Done. You processed {self.done} message(s).", view=None)
 
         # apply processed messages
-        self.classifier.refit()
+        self.faq.refit()
 
-        self.classifier = None
+        self.faq = None
         self.done = 0
         self.max_count = 0
         self.predictions = None
@@ -144,7 +144,7 @@ class FaqExpand(Cog):
 
         message = messages[self.current_message]
 
-        await self.provide_message(self.classifier, int(self.current_key), message)
+        await self.provide_message(self.faq, int(self.current_key), message)
 
     async def provide_message(self, classifier: AutoFaq, category: int, message: str):
         await self.response.edit(f"**Progress:** {self.done + 1}/{self.max_count}\n"
@@ -154,17 +154,17 @@ class FaqExpand(Cog):
     async def callback(self, decision: int, interaction: nextcord.Interaction) -> None:
         messages = self.predictions[self.current_key]
         message = messages[self.current_message]
-        cleaned = self.classifier.data.clean_message(message)
+        cleaned = self.faq.data.clean_message(message)
 
         if decision == 0:
             # add to dataset
-            entry: LinkedFaqEntry = self.classifier.data.faq_entry(int(self.current_key))
+            entry: LinkedFaqEntry = self.faq.data.faq_entry(int(self.current_key))
             entry.add_message(cleaned)
             log.info(f"The message '{message}' was added to the '{entry.short()}' dataset",
                      f"by {interaction.user.name}#{interaction.user.discriminator}.")
         elif decision == 1:
             # add to ignored dataset
-            self.classifier.data.add_nonsense(cleaned)
+            self.faq.data.add_nonsense(cleaned)
             log.info(f"The message '{message}' was added to the nonsense dataset",
                      f"by {interaction.user.name}#{interaction.user.discriminator}.")
 
@@ -174,4 +174,4 @@ class FaqExpand(Cog):
 
 
 def setup(bot: Bot):
-    bot.add_cog(FaqExpand(bot, core.classifier.store))
+    bot.add_cog(FaqExpand(bot, core.faq.store))

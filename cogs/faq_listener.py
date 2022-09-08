@@ -4,7 +4,7 @@ import nextcord
 from nextcord.ext import commands
 
 import core.classifier
-from core.classifier import Store, AutoFaq
+from core.faq import Store, AutoFaq
 
 
 def get_role_position(user: nextcord.Member) -> int:
@@ -32,7 +32,7 @@ class FaqListener(commands.Cog):
         if not topic:
             return
 
-        classifier: AutoFaq = self.store.classifiers[topic]
+        faq: AutoFaq = self.store.classifiers[topic]
 
         if has_permission(message.author):
             if self.bot.user in message.mentions:
@@ -42,7 +42,7 @@ class FaqListener(commands.Cog):
                 if message.reference:
                     await self.process_add(topic, message, short)
                 else:
-                    entry = classifier.data.faq_entry_by_short(short)
+                    entry = faq.data.faq_entry_by_short(short)
                     if entry:
                         await message.channel.send(entry.answer())
                     else:
@@ -51,7 +51,7 @@ class FaqListener(commands.Cog):
                 # just ignore message from staff members
                 pass
         else:
-            await classifier.check_message(message)
+            await faq.check_message(message)
 
     async def process_add(self, topic: str, message: nextcord, short: str):
         ref: nextcord.MessageReference = message.reference
@@ -60,4 +60,4 @@ class FaqListener(commands.Cog):
 
 
 def setup(bot: commands.Bot):
-    bot.add_cog(FaqListener(bot, core.classifier.store))
+    bot.add_cog(FaqListener(bot, core.faq.store))

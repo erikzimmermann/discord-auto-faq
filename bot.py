@@ -5,7 +5,7 @@ from nextcord.ext import commands
 
 import core.classifier
 import core.log as log
-from core.classifier import Store
+from core.faq import Store
 from core.files import Config
 
 config: Config = Config()
@@ -15,7 +15,13 @@ intents.message_content = True
 
 activity = nextcord.Activity(type=config.activity_type(), name=config.activity())
 bot = commands.Bot(intents=intents, activity=activity)
-store = core.classifier.setup(Store(bot))
+store = core.faq.setup(Store(bot))
+
+
+@bot.event
+async def on_ready():
+    print("Bot is ready! - @Pterodactyl")
+    log.info('We logged in as', bot.user)
 
 
 def load_extensions():
@@ -28,10 +34,9 @@ def load_extensions():
 def start():
     log.load_logging_handlers()
     load_extensions()
-
-    print("Bot is ready! - @Pterodactyl")
-    log.info("Starting bot...")
     store.load_classifiers()
+
+    log.info("Starting bot...")
     bot.run(config.token())
 
 

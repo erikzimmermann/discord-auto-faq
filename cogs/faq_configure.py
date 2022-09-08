@@ -3,14 +3,14 @@ from nextcord import SlashOption
 from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
-from core.classifier import Store, AutoFaq
+from core.faq import Store, AutoFaq
 from core.files import LinkedFaqEntry
 from core.ui import FaqEditModal, FaqDeleteModal
 import core.log as log
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
-    await interaction.response.send_autocomplete(core.classifier.store.config.topics())
+    await interaction.response.send_autocomplete(core.faq.store.config.topics())
 
 
 async def faq_edit_callback(modal: FaqEditModal, interaction: nextcord.Interaction):
@@ -45,8 +45,8 @@ async def faq_delete_callback(modal: FaqEditModal, interaction: nextcord.Interac
 
     if entry.short().upper() != modal.short.value:
         await interaction.send(
-            f"The FAQ entry was **not** deleted. (*{modal.short.value}* ≠ *{entry.short().upper()}*)"
-            , ephemeral=True
+            f"The FAQ entry was **not** deleted. (*{modal.short.value}* ≠ *{entry.short().upper()}*)",
+            ephemeral=True
         )
         return
 
@@ -167,4 +167,4 @@ class FaqConfig(Cog):
 
 
 def setup(bot: Bot):
-    bot.add_cog(FaqConfig(bot, core.classifier.store))
+    bot.add_cog(FaqConfig(bot, core.faq.store))

@@ -1,10 +1,10 @@
 import json
+import os
 import re
 from typing import Optional
 
 import nextcord
 import numpy as np
-import os
 
 
 class File:
@@ -173,7 +173,6 @@ class Data(File):
     def __init__(self, topic: str):
         super(Data, self).__init__("data")
         self.topic = topic
-        self.__repair_messages__()
 
     def faq(self) -> list[dict]:
         topics: dict = self.file["faq"]
@@ -253,7 +252,7 @@ class Data(File):
         self.nonsense().append(text)
         self.save()
 
-    def __repair_messages__(self) -> None:
+    def repair_messages(self) -> None:
         changed = False
 
         for e in self.faq():
