@@ -5,7 +5,7 @@ import nextcord
 from nextcord.ext.commands import Bot
 
 import core.log as log
-from core.classifier import SvcClassifier, BertClassifier
+from core.classifier import BertClassifier
 from core.files import Config, Data, LinkedFaqEntry
 from core.ui import AutoResponseView
 
@@ -31,11 +31,10 @@ class Store:
 
 
 class AutoFaq:
-    def __init__(self, bot: Bot, topic: str, test_split: Optional[float] = 0.3, min_threshold: float = 0.3,
+    def __init__(self, bot: Bot, topic: str, min_threshold: float = 0.3,
                  max_threshold: float = 0.7, random_state: int = None):
         self.bot = bot
         self.topic = topic
-        self.test_split = test_split
         self.min_threshold = min_threshold
         self.max_threshold = max_threshold
         self.random_state = random_state
@@ -43,7 +42,7 @@ class AutoFaq:
         self.data = Data(topic)
         self.data.repair_messages()
 
-        self.classifier: Optional[SvcClassifier] = None
+        self.classifier: Optional[BertClassifier] = None
         self.__load__()
 
     def refit(self) -> None:
@@ -51,10 +50,6 @@ class AutoFaq:
         self.__load__()
 
     def __load__(self):
-        # if self.test_split:
-        #     test = SvcClassifier(self.data, test_split=self.test_split, random_state=42)
-        #     log.info(f"Classifier in topic {self.topic} loaded. Score:", round(test.score, 4))
-
         self.classifier = BertClassifier(self.data)
 
     async def check_message(self, reply_on: nextcord.Message) -> (Optional[str], Optional[AutoResponseView]):
