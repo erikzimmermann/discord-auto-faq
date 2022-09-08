@@ -45,7 +45,7 @@ class FaqTest(Cog):
 
         class_id, p = faq.classifier.predict(message)
 
-        if class_id:
+        if class_id is not None:
             entry: LinkedFaqEntry = faq.data.faq_entry(class_id)
             e = Embed(
                 # title="AutoFAQ prediction",
@@ -54,7 +54,7 @@ class FaqTest(Cog):
                             f"**Response:** '{entry.answer()}'",
                 color=0x12A498
             )
-        elif p:
+        elif p is not None:
             e = Embed(
                 # title="AutoFAQ prediction",
                 description=f"**Prediction:** Ignore\n"
