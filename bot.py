@@ -34,6 +34,8 @@ def load_extensions():
 def start():
     log.load_logging_handlers()
     load_extensions()
+
+    log.info("Loading classifiers...")
     store.load_classifiers()
 
     log.info("Starting bot...")

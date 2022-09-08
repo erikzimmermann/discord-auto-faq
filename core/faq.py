@@ -5,7 +5,7 @@ import nextcord
 from nextcord.ext.commands import Bot
 
 import core.log as log
-from core.classifier import AutoFaqClassifier
+from core.classifier import SvcClassifier, BertClassifier
 from core.files import Config, Data, LinkedFaqEntry
 from core.ui import AutoResponseView
 
@@ -23,8 +23,10 @@ class Store:
             self.classifiers[topic] = AutoFaq(
                 self.bot,
                 topic,
-                min_threshold=self.config.min_threshold(),
-                max_threshold=self.config.max_threshold()
+                # min_threshold=self.config.min_threshold(),
+                # max_threshold=self.config.max_threshold()
+                min_threshold=0.7,
+                max_threshold=0.9
             )
 
 
@@ -41,7 +43,7 @@ class AutoFaq:
         self.data = Data(topic)
         self.data.repair_messages()
 
-        self.classifier: Optional[AutoFaqClassifier] = None
+        self.classifier: Optional[SvcClassifier] = None
         self.__load__()
 
     def refit(self) -> None:
@@ -49,11 +51,11 @@ class AutoFaq:
         self.__load__()
 
     def __load__(self):
-        if self.test_split:
-            test = AutoFaqClassifier(self.data, test_split=self.test_split, random_state=42)
-            log.info(f"Classifier in topic {self.topic} loaded. Score:", round(test.score, 4))
+        # if self.test_split:
+        #     test = SvcClassifier(self.data, test_split=self.test_split, random_state=42)
+        #     log.info(f"Classifier in topic {self.topic} loaded. Score:", round(test.score, 4))
 
-        self.classifier = AutoFaqClassifier(self.data)
+        self.classifier = BertClassifier(self.data)
 
     async def check_message(self, reply_on: nextcord.Message) -> (Optional[str], Optional[AutoResponseView]):
         answer_id, p = self.classifier.predict(reply_on.content)

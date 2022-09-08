@@ -6,6 +6,8 @@ from typing import Optional
 import nextcord
 import numpy as np
 
+from core import filter
+
 
 class File:
     def __init__(self, file_name):
@@ -274,7 +276,7 @@ class Data(File):
         for i in range(len(messages)):
             new_message = self.clean_message(messages[i])
 
-            if len(new_message) > 0:
+            if filter.is_valid(new_message):
                 if messages[i] != new_message:
                     messages[i] = new_message
                     changed = True
