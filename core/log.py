@@ -30,7 +30,7 @@ class LoggingFormatter(logging.Formatter):
 
         if level == logging.INFO:
             color_primary = self.blue
-            if len(record.getMessage()) > 300:
+            if len(record.getMessage()) > 500:
                 color_message = self.dark_gray
         elif level == logging.WARNING:
             color_primary = color_message = self.yellow
