@@ -43,11 +43,14 @@ class FaqInfo(Cog):
             entry: LinkedFaqEntry = classifier.data.faq_entry_by_short(abbreviation)
 
             if entry:
+                t = classifier.calculate_threshold(entry.id)
                 embed = Embed(
                     title="FAQ Entry",
                     description=f"**Topic:** '{classifier.topic}'\n"
                                 f"**Short:** '{entry.short()}'\n"
-                                f"**Answer:** '{entry.answer()}'",
+                                f"\n**Votes:** '👍 {entry.up_votes()} 👎 {entry.down_votes()}'\n"
+                                f"**Threshold:** {round(t * 100, 4)}%\n"
+                                f"\n**Answer:** '{entry.answer()}'",
                     color=COLOR_SUCCESS
                 )
                 await interaction.send(embed=embed, ephemeral=True)

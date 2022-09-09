@@ -53,8 +53,8 @@ class FaqTest(Cog):
                 # title="AutoFAQ prediction",
                 description=f"**Prediction:** '{entry.short()}'\n"
                             f"**Probability:** {round(p * 100, 4)}%\n"
-                            f"**Threshold:** {round(t * 100, 4)}% ({p >= t})\n\n"
-                            f"**Response:** '{entry.answer()}'",
+                            f"**Threshold:** {round(t * 100, 4)}% ({p >= t})\n"
+                            f"\n**Response:** '{entry.answer()}'",
                 color=COLOR_PRIMARY if p >= t else COLOR_FAIL
             )
         elif p is not None:
