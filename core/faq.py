@@ -23,10 +23,8 @@ class Store:
             self.classifiers[topic] = AutoFaq(
                 self.bot,
                 topic,
-                # min_threshold=self.config.min_threshold(),
-                # max_threshold=self.config.max_threshold()
-                min_threshold=0.7,
-                max_threshold=0.9
+                min_threshold=self.config.min_threshold(),
+                max_threshold=self.config.max_threshold()
             )
 
 
