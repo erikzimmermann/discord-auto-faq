@@ -48,7 +48,7 @@ class FaqInfo(Cog):
                     title="FAQ Entry",
                     description=f"**Topic:** '{classifier.topic}'\n"
                                 f"**Short:** '{entry.short()}'\n"
-                                f"\n**Votes:** '👍 {entry.up_votes()} 👎 {entry.down_votes()}'\n"
+                                f"\n**Votes:** 👍 {entry.up_votes()}  👎 {entry.down_votes()}\n"
                                 f"**Threshold:** {round(t * 100, 4)}%\n"
                                 f"\n**Answer:** '{entry.answer()}'",
                     color=COLOR_SUCCESS
