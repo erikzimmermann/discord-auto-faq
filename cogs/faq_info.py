@@ -21,7 +21,7 @@ class FaqInfo(Cog):
         self.store = store
 
     @nextcord.slash_command(description="Shows the abbreviations of every FAQ message.",
-                            dm_permission=False, guild_ids=[932268427333210142])
+                            dm_permission=False)
     async def faq(self, interaction: nextcord.Interaction,
                   topic: str = SlashOption(
                       description="This defines the topic this FAQ entry will be created in.",
