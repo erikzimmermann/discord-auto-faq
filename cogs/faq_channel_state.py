@@ -29,10 +29,10 @@ class FaqChannel(Cog):
         if not isinstance(interaction.channel, nextcord.TextChannel):
             return
 
-        topic = self.store.config.get_topic(interaction.channel)
-        if topic:
+        old_topic = self.store.config.get_topic(interaction.channel)
+        if old_topic:
             await interaction.send(
-                f"AutoFAQ with the topic *{topic}* is already activated in this channel. "
+                f"AutoFAQ with the topic *{old_topic}* is already activated in this channel. "
                 f"Disable it first with `/faq_disable`.",
                 ephemeral=True)
             return
