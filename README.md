@@ -4,8 +4,8 @@ In order to achieve this, the bot uses **BERT** for natural language processing 
 Now, if the highest calculated metric for a message exceeds a threshold, the bot automatically reacts with a predefined answer corresponding to the trigger.
 
 If you are interested in BERT, here are 2 links for you:  
-Blog post: [BERT For Measuring Text Similarity](https://towardsdatascience.com/bert-for-measuring-text-similarity-eec91c6bf9e1)  
-Releasing paper: [Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks](https://arxiv.org/abs/1908.10084)  
+* Blog post: [BERT For Measuring Text Similarity](https://towardsdatascience.com/bert-for-measuring-text-similarity-eec91c6bf9e1)  
+* Releasing paper: [Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks](https://arxiv.org/abs/1908.10084)  
 
 # Setup
 As the administrator, you first have to create an FAQ topic by using `/faq_enable`. Then, you can create FAQ entries with `/faq_add` and fill them with messages which should be automatically answered with your FAQ.
