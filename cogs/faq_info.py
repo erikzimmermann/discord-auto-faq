@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 import nextcord
@@ -6,9 +7,8 @@ from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
 from core.faq import Store, AutoFaq
-from core.files import ChatData, LinkedFaqEntry
+from core.files import LinkedFaqEntry
 from core.magic import COLOR_PRIMARY, COLOR_SUCCESS
-import re
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
