@@ -73,7 +73,7 @@ class AutoFaq:
     async def send_faq(self, reply_on: nextcord.Message, answer_id: int, answer: str, allow_feedback: bool) -> None:
         if allow_feedback:
             view = AutoResponseView(reply_on.author, lambda vote: self.apply_vote(answer_id, vote))
-            response = await reply_on.reply(answer, view=view)
+            response = await reply_on.reply(answer, view=view, mention_author=False)
             view.apply_context(response)
         else:
             await reply_on.reply(answer)
@@ -110,6 +110,14 @@ class AutoFaq:
 
         await command.add_reaction("🤔")
 
+    async def delete_old_response(self, reference: nextcord.Message, message_range: int = 20) -> None:
+        async for old in reference.channel.history(limit=message_range):
+            member: nextcord.Member = old.author
+            if member.id == self.bot.user.id and old.reference:
+                if old.reference.message_id == reference.id:
+                    await old.delete()
+                    break
+
     async def add_message_to_nonsense(self, command: nextcord.Message, content: str, referenced: nextcord.Message):
         self.data.add_nonsense(content)
         self.refit()
@@ -117,13 +125,7 @@ class AutoFaq:
         log.info(f"The message '{referenced.content}' was added to the nonsense dataset",
                  f"by {command.author.name}#{command.author.discriminator}.")
 
-        # delete last message which replied to the referenced message
-        async for old in command.channel.history(limit=20):
-            member: nextcord.Member = old.author
-            if member.id == self.bot.user.id and old.reference:
-                if old.reference.message_id == referenced.id:
-                    await old.delete()
-                    break
+        await self.delete_old_response(referenced)
 
         await command.add_reaction("✅")
 

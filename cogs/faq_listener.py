@@ -56,7 +56,11 @@ class FaqListener(commands.Cog):
     async def process_add(self, topic: str, message: nextcord, short: str):
         ref: nextcord.MessageReference = message.reference
         fetched: nextcord.Message = await message.channel.fetch_message(ref.message_id)
-        await self.store.classifiers[topic].add_message_by_short(message, fetched, short)
+
+        classifier: AutoFaq = self.store.classifiers[topic]
+
+        await classifier.delete_old_response(fetched)
+        await classifier.add_message_by_short(message, fetched, short)
 
 
 def setup(bot: commands.Bot):
