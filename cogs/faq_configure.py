@@ -1,12 +1,13 @@
 import nextcord
-from nextcord import SlashOption
+from nextcord import SlashOption, Embed
 from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
+import core.log as log
 from core.faq import Store, AutoFaq
 from core.files import LinkedFaqEntry
-from core.ui import FaqEditModal, FaqDeleteModal
-import core.log as log
+from core.magic import COLOR_SUCCESS, COLOR_DANGER
+from core.ui import FaqEditModal, FaqDeleteUndoView
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
@@ -15,17 +16,22 @@ async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction,
 
 async def faq_edit_callback(modal: FaqEditModal, interaction: nextcord.Interaction):
     entry: LinkedFaqEntry = modal.entry
-    response = f"Following changes in topic *{modal.topic}* were saved:\n"
+    response = f"Following changes in topic {modal.faq.topic} were saved:"
     changed = False
     old_short = entry.short()
 
-    if modal.short.value != entry.short():
-        response += f"Short: *{entry.short()}* -> *{modal.short.value}*"
-        entry.set_short(modal.short.value)
+    short_input = modal.short.value.lower().strip()
+    if short_input != entry.short():
+        response += f"\n\n**Short**\n" \
+                    f"*before:* '{entry.short()}'\n" \
+                    f"*after:* '{short_input}'"
+        entry.set_short(short_input)
         changed = True
 
     if modal.answer.value != entry.answer():
-        response += f"Answer: \n{entry.answer()} \n-> \n{modal.answer.value}"
+        response += f"\n\n**Answer**\n" \
+                    f"*before:* '{entry.answer()}'\n" \
+                    f"*after:* '{modal.answer.value}'"
         entry.set_answer(modal.answer.value)
         changed = True
 
@@ -33,33 +39,23 @@ async def faq_edit_callback(modal: FaqEditModal, interaction: nextcord.Interacti
         await interaction.send("No changes were made.", ephemeral=True)
         return
     else:
-        log.info(f"The FAQ entry '{old_short}' has been edited",
-                 f"by {interaction.user.name}#{interaction.user.discriminator}.", response)
-
-        modal.data.save()
-        await interaction.send(response, ephemeral=True)
-
-
-async def faq_delete_callback(modal: FaqEditModal, interaction: nextcord.Interaction):
-    entry: LinkedFaqEntry = modal.entry
-
-    if entry.short().upper() != modal.short.value:
-        await interaction.send(
-            f"The FAQ entry was **not** deleted. (*{modal.short.value}* ≠ *{entry.short().upper()}*)",
-            ephemeral=True
+        embed = Embed(
+            title="FAQ Edit",
+            description=response,
+            color=COLOR_SUCCESS
         )
-        return
+        await interaction.send(embed=embed, ephemeral=True)
 
-    modal.data.delete_faq_entry(entry)
+        log.info(f"The FAQ entry '{old_short}' has been edited",
+                 f"by {interaction.user.name}#{interaction.user.discriminator}.",
+                 response.replace('*', ''))
 
-    log.info(f"The FAQ entry '{entry.short()}' has been deleted",
-             f"by {interaction.user.name}#{interaction.user.discriminator}. It's answer was: '{entry.answer()}'")
-
-    await interaction.send(f"The FAQ entry *{entry.short()}* was **deleted** successfully.", ephemeral=True)
+        modal.faq.data.save()
+        modal.faq.refit()
 
 
 async def check_parameters(interaction: nextcord.Interaction, topic: str, abbreviation: str, store: Store) \
-        -> (str, str, AutoFaq):
+        -> (str, AutoFaq, AutoFaq):
     abbreviation = abbreviation.lower().strip()
     classifier: AutoFaq = store.classifiers.get(topic)
 
@@ -91,7 +87,7 @@ class FaqConfig(Cog):
     @nextcord.slash_command(description="Adds an automated answer to the FAQ.",
                             dm_permission=False)
     async def faq_add(self, interaction: nextcord.Interaction,
-                      abbreviation: str = SlashOption(
+                      short: str = SlashOption(
                           description="This abbreviation will be used to add more message to "
                                       "the dataset and print FAQ answers for users.",
                           min_length=2,
@@ -110,23 +106,33 @@ class FaqConfig(Cog):
                           autocomplete=True,
                           autocomplete_callback=autocomplete_topic
                       )):
-        abbreviation = abbreviation.lower().strip()
-        word_count = len(abbreviation.split(" "))
+        short = short.lower().strip()
+        word_count = len(short.split(" "))
         if word_count != 1:
-            await interaction.send(f"Your abbreviation cannot be longer than one word.", ephemeral=True)
+            await interaction.send(f"Your abbreviation cannot be longer than one word. 😧", ephemeral=True)
             return
 
         classifier: AutoFaq = self.store.classifiers.get(topic)
 
         if not classifier:
-            await interaction.send(f"This topic does not exist. You have to enable a topic by using `/faq_enable`.",
+            await interaction.send(f"This topic does not exist. You have to enable a topic by using `/faq_enable`. 🤔",
                                    ephemeral=True)
             return
 
-        if await classifier.create_answer(answer, abbreviation, interaction):
-            log.info(f"The FAQ entry '{abbreviation}' has been created",
+        if await classifier.create_answer(answer, short, interaction):
+            log.info(f"The FAQ entry '{short}' has been created",
                      f"by {interaction.user.name}#{interaction.user.discriminator}. Answer: '{answer}'")
-            await interaction.send(f"Your answer *{answer}* was created. Short: *{abbreviation}*", ephemeral=True)
+
+            embed = Embed(
+                title="FAQ Entry Creation",
+                description=f"Your FAQ entry was created successfully. 👌\n"
+                            f"\n"
+                            f"**Topic:** '{classifier.topic}'\n"
+                            f"**Short:** '{short}'\n"
+                            f"**Answer:** '{answer}'",
+                color=COLOR_SUCCESS
+            )
+            await interaction.send(embed=embed, ephemeral=True)
 
     @nextcord.slash_command(description="Edits an FAQ entry.",
                             dm_permission=False)
@@ -144,7 +150,7 @@ class FaqConfig(Cog):
         abbreviation, classifier, entry = await check_parameters(interaction, topic, abbreviation, self.store)
 
         if abbreviation and classifier and entry:
-            await interaction.response.send_modal(FaqEditModal(topic, entry, classifier.data, faq_edit_callback))
+            await interaction.response.send_modal(FaqEditModal(entry, classifier, faq_edit_callback))
 
     @nextcord.slash_command(description="Deletes an FAQ entry.",
                             default_member_permissions=nextcord.Permissions(administrator=True),
@@ -163,7 +169,25 @@ class FaqConfig(Cog):
         abbreviation, classifier, entry = await check_parameters(interaction, topic, abbreviation, self.store)
 
         if abbreviation and classifier and entry:
-            await interaction.response.send_modal(FaqDeleteModal(topic, entry, classifier.data, faq_delete_callback))
+            classifier.data.delete_faq_entry(entry)
+
+            log.info(f"The FAQ entry '{entry.short()}' has been deleted",
+                     f"by {interaction.user.name}#{interaction.user.discriminator}. It's answer was: '{entry.answer()}'")
+
+            embed = Embed(
+                title="FAQ Entry Deletion",
+                description=f"Your FAQ entry was deleted successfully. 🗑️\n"
+                            f"\n"
+                            f"**Topic:** '{classifier.topic}'\n"
+                            f"**Short:** '{entry.short()}'\n"
+                            f"**Answer:** '{entry.answer()}'\n"
+                            f"\n"
+                            f"*Click on 'restore' to undo your action.*",
+                color=COLOR_DANGER
+            )
+            await interaction.send(embed=embed, view=FaqDeleteUndoView(classifier, entry), ephemeral=True)
+
+            classifier.refit()
 
 
 def setup(bot: Bot):

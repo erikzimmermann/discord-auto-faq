@@ -5,6 +5,7 @@ from nextcord.ext.commands import Cog, Bot
 import core.classifier
 from core.faq import Store, AutoFaq
 from core.files import LinkedFaqEntry
+from core.magic import COLOR_PRIMARY, COLOR_FAIL
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
@@ -46,27 +47,29 @@ class FaqTest(Cog):
         class_id, p = faq.classifier.predict(message)
 
         if class_id is not None:
+            t = faq.calculate_threshold(class_id)
             entry: LinkedFaqEntry = faq.data.faq_entry(class_id)
             e = Embed(
                 # title="AutoFAQ prediction",
                 description=f"**Prediction:** '{entry.short()}'\n"
                             f"**Probability:** {round(p * 100, 4)}%\n"
+                            f"**Threshold:** {round(t * 100, 4)}% ({p >= t})\n\n"
                             f"**Response:** '{entry.answer()}'",
-                color=0x12A498
+                color=COLOR_PRIMARY if p >= t else COLOR_FAIL
             )
         elif p is not None:
             e = Embed(
                 # title="AutoFAQ prediction",
                 description=f"**Prediction:** Ignore\n"
                             f"**Probability:** {round(p * 100, 4)}%",
-                color=0x12A498
+                color=COLOR_PRIMARY
             )
         else:
             e = Embed(
                 # title="AutoFAQ prediction",
                 description=f"**Prediction:** Ignore\n"
                             f"**Reason:** *To few or much content*",
-                color=0x12A498
+                color=COLOR_PRIMARY
             )
 
         await interaction.send(embed=e, ephemeral=True)

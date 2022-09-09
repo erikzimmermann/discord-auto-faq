@@ -1,6 +1,4 @@
-MAX_WORD_COUNT = 20
-MIN_WORD_COUNT = 3
-MAX_WORD_LENGTH = 30
+from core.magic import MAX_WORD_COUNT, MIN_WORD_COUNT, MAX_WORD_LENGTH
 
 
 def get_max_word_length(s: str) -> int:

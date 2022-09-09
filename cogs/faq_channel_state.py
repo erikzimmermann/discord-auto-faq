@@ -3,8 +3,8 @@ from nextcord import SlashOption
 from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
-from core.faq import Store
 import core.log as log
+from core.faq import Store
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
@@ -32,7 +32,7 @@ class FaqChannel(Cog):
         old_topic = self.store.config.get_topic(interaction.channel)
         if old_topic:
             await interaction.send(
-                f"AutoFAQ with the topic *{old_topic}* is already activated in this channel. "
+                f"AutoFAQ with the topic *{old_topic}* is already activated in this channel. 🤔"
                 f"Disable it first with `/faq_disable`.",
                 ephemeral=True)
             return
@@ -48,14 +48,14 @@ class FaqChannel(Cog):
 
             if no_data:
                 await interaction.send(
-                    f"AutoFAQ with the topic *{topic}* is now activated for this channel. "
+                    f"AutoFAQ with the topic *{topic}* is now activated for this channel. 🥳"
                     f"For now, this topic has **no FAQ entries**. Fill your FAQ with `/faq_add`.",
                     ephemeral=True)
             else:
-                await interaction.send(f"AutoFAQ with the topic *{topic}* is now activated for this channel.",
+                await interaction.send(f"AutoFAQ with the topic *{topic}* is now activated for this channel. 🥳",
                                        ephemeral=True)
         else:
-            await interaction.send("AutoFAQ is already activated for this channel.", ephemeral=True)
+            await interaction.send("AutoFAQ is already activated for this channel. 🤔", ephemeral=True)
 
     @nextcord.slash_command(description="Disables the auto FAQ for the channel where this command will be executed.",
                             dm_permission=False)
@@ -68,9 +68,9 @@ class FaqChannel(Cog):
                      f"({interaction.channel.id}) in guild", f"'{interaction.guild.name}'",
                      f"({interaction.guild.id})", f"by {interaction.user.name}#{interaction.user.discriminator}.")
 
-            await interaction.send("AutoFAQ is now disabled for this channel.", ephemeral=True)
+            await interaction.send("AutoFAQ is now disabled for this channel. 🤐", ephemeral=True)
         else:
-            await interaction.send("AutoFAQ is not activated for this channel.", ephemeral=True)
+            await interaction.send("AutoFAQ is not activated for this channel. 🤔", ephemeral=True)
 
 
 def setup(bot: Bot):

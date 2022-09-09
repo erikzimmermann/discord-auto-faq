@@ -1,10 +1,12 @@
 from typing import Optional, Callable
 
 import nextcord.ui
-from nextcord import Interaction
+from nextcord import Interaction, Embed
 from nextcord.ui import View, Modal, Select, TextInput
 
-from core.files import LinkedFaqEntry, Data
+from core import log
+from core.files import LinkedFaqEntry
+from core.magic import COLOR_DANGER, COLOR_WARNING
 
 
 class AutoResponseView(View):
@@ -107,12 +109,11 @@ class FaqExpandView(View):
 
 
 class FaqEditModal(Modal):
-    def __init__(self, topic: str, entry: LinkedFaqEntry, data: Data, callback: Callable):
-        super(FaqEditModal, self).__init__(f"FAQ Edit: {topic}")
+    def __init__(self, entry: LinkedFaqEntry, auto_faq, callback: Callable):
+        super(FaqEditModal, self).__init__(f"FAQ Edit: {auto_faq.topic}")
         self.nested_callback = callback
-        self.topic = topic
         self.entry = entry
-        self.data = data
+        self.faq = auto_faq
 
         self.short = TextInput(
             label="Abbreviation", required=True, min_length=2, max_length=15,
@@ -132,20 +133,38 @@ class FaqEditModal(Modal):
         await self.nested_callback(self, interaction)
 
 
-class FaqDeleteModal(Modal):
-    def __init__(self, topic: str, entry: LinkedFaqEntry, data: Data, callback: Callable):
-        super(FaqDeleteModal, self).__init__(f"FAQ Delete Confirmation: {topic}")
-        self.nested_callback = callback
-        self.topic = topic
+class FaqDeleteUndoView(View):
+    def __init__(self, auto_faq, entry: LinkedFaqEntry):
+        super().__init__()
+        self.faq = auto_faq
         self.entry = entry
-        self.data = data
 
-        self.short = TextInput(
-            label=f"Please type '{self.entry.short().upper()}' to confirm.",
-            max_length=15,
-            style=nextcord.TextInputStyle.short
-        )
-        self.add_item(self.short)
+    @nextcord.ui.button(label="Restore", style=nextcord.ButtonStyle.gray)
+    async def undo(self, button: nextcord.Button, interaction: nextcord.Interaction) -> None:
+        if self.faq.data.append_faq_entry(self.entry):
+            log.info(f"The FAQ entry '{self.entry.short()}' has been restored",
+                     f"by {interaction.user.name}#{interaction.user.discriminator}.")
 
-    async def callback(self, interaction: Interaction):
-        await self.nested_callback(self, interaction)
+            embed = Embed(
+                title="FAQ Entry Deletion",
+                description=f"**Topic:** '{self.faq.data.topic}'\n"
+                            f"**Short:** '{self.entry.short()}'\n"
+                            f"**Answer:** '{self.entry.answer()}'\n"
+                            f"\n"
+                            f"*This entry has been restored.*",
+                color=COLOR_WARNING
+            )
+            await interaction.edit(embed=embed, view=None)
+            self.faq.refit()
+        else:
+            embed = Embed(
+                title="FAQ Entry Deletion",
+                description=f"**Topic:** '{self.faq.data.topic}'\n"
+                            f"**Short:** '{self.entry.short()}'\n"
+                            f"**Answer:** '{self.entry.answer()}'\n"
+                            f"\n"
+                            f"This entry could *not* be restored. "
+                            f"Either it's abbreviation or answer already exist.",
+                color=COLOR_DANGER
+            )
+            await interaction.edit(embed=embed)

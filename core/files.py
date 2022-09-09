@@ -234,6 +234,14 @@ class Data(File):
         self.faq().append(entry)
         self.save()
 
+    def append_faq_entry(self, entry: FaqEntry) -> bool:
+        if self.faq_entry_by_short(entry.short()) or self.faq_entry_by_answer(entry.answer()):
+            return False
+
+        self.faq().append(entry.data)
+        self.save()
+        return True
+
     def delete_faq_entry(self, entry: LinkedFaqEntry):
         self.faq().pop(entry.id)
         self.save()

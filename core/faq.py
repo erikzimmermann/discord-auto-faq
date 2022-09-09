@@ -62,7 +62,7 @@ class AutoFaq:
 
         # change class index to answer_id
         entry = self.data.faq_entry(answer_id)
-        threshold = self.__calculate_threshold__(answer_id)
+        threshold = self.calculate_threshold(answer_id)
 
         log.info("Incoming message:", reply_on.content,
                  f"({entry.short()}, p={round(p, 4)}, threshold={threshold}, {p >= threshold})")
@@ -129,25 +129,27 @@ class AutoFaq:
 
     async def create_answer(self, answer: str, short: str, interaction: nextcord.Interaction) -> bool:
         if short == "ignore":
-            await interaction.send(f"The short *{short}* is reserved. Please choose another one.", ephemeral=True)
+            await interaction.send(f"The short *{short}* is reserved. Please choose another one. 😕", ephemeral=True)
             return False
 
         entry: LinkedFaqEntry = self.data.faq_entry_by_short(short)
         if entry:
-            await interaction.send(f"The short *{short}* is already registered. It's answer is *{entry.answer()}*",
+            await interaction.send(f"The short '{short}' is already registered. 👀\n"
+                                   f"It's answer is '{entry.answer()}'",
                                    ephemeral=True)
             return False
 
         entry: LinkedFaqEntry = self.data.faq_entry_by_answer(answer)
         if entry:
-            await interaction.send(f"The answer *{answer}* is already registered. It's short is *{entry.short()}*",
+            await interaction.send(f"The answer '{answer}' is already registered. 👀\n"
+                                   f"It's short is '{entry.short()}'",
                                    ephemeral=True)
             return False
 
         self.data.add_faq_entry(answer, short)
         return True
 
-    def __calculate_threshold__(self, answer_id: int) -> Optional[float]:
+    def calculate_threshold(self, answer_id: int) -> Optional[float]:
         entry = self.data.faq_entry(answer_id)
 
         if entry.votes() == 0:

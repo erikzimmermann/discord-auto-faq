@@ -1,10 +1,14 @@
+from typing import Optional
+
 import nextcord
-from nextcord import SlashOption
+from nextcord import SlashOption, Embed
 from nextcord.ext.commands import Cog, Bot
 
 import core.classifier
 from core.faq import Store, AutoFaq
-from core.files import ChatData
+from core.files import ChatData, LinkedFaqEntry
+from core.magic import COLOR_PRIMARY, COLOR_SUCCESS
+import re
 
 
 async def autocomplete_topic(parent_cog: Cog, interaction: nextcord.Interaction, current_value: str, **kwargs: dict):
@@ -17,13 +21,16 @@ class FaqInfo(Cog):
         self.store = store
 
     @nextcord.slash_command(description="Shows the abbreviations of every FAQ message.",
-                            dm_permission=False)
+                            dm_permission=False, guild_ids=[932268427333210142])
     async def faq(self, interaction: nextcord.Interaction,
                   topic: str = SlashOption(
                       description="This defines the topic this FAQ entry will be created in.",
                       required=True,
                       autocomplete=True,
                       autocomplete_callback=autocomplete_topic
+                  ),
+                  abbreviation: Optional[str] = SlashOption(
+                      description="The abbreviation of the FAQ entry."
                   )):
         classifier: AutoFaq = self.store.classifiers.get(topic)
 
@@ -32,12 +39,42 @@ class FaqInfo(Cog):
                                    ephemeral=True)
             return
 
-        response = ""
+        if abbreviation:
+            entry: LinkedFaqEntry = classifier.data.faq_entry_by_short(abbreviation)
+
+            if entry:
+                embed = Embed(
+                    title="FAQ Entry",
+                    description=f"**Topic:** '{classifier.topic}'\n"
+                                f"**Short:** '{entry.short()}'\n"
+                                f"**Answer:** '{entry.answer()}'",
+                    color=COLOR_SUCCESS
+                )
+                await interaction.send(embed=embed, ephemeral=True)
+            else:
+                await interaction.send(f"This FAQ entry does not exist. Please try another one.", ephemeral=True)
+            return
+
+        entries = []
         for entry in classifier.data.linked_faq():
-            if len(response) > 0:
-                response += "\n"
-            response += f"*{entry.short()}*: {entry.answer()}"
-        await interaction.send(response, ephemeral=True)
+            answer = re.sub(r'[^a-zA-Z0-9.,;:äüöÄÜÖ ]*', '', entry.answer())
+            short_length = len(entry.short())
+            entries.append(f"**{entry.short()}**: "
+                           f"'{answer if short_length + len(answer) <= 70 else answer[:70 - short_length] + '...'}'")
+
+        response = f"To see the full answer, please use the 'abbreviation' argument for this command.\n"
+        for e in sorted(entries):
+            response += "\n" + e
+
+        if len(response) == 0:
+            await interaction.send("There are no FAQ entries yet. Create one with `/faq_add`.")
+        else:
+            embed = Embed(
+                title=f"FAQs in topic *{classifier.topic}*",
+                description=response,
+                color=COLOR_PRIMARY
+            )
+            await interaction.send(embed=embed, ephemeral=True)
 
     @nextcord.slash_command(description="Saves the chat of the current channel to a file.",
                             default_member_permissions=nextcord.Permissions(administrator=True), dm_permission=False)
