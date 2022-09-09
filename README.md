@@ -1,21 +1,26 @@
 # Discord AutoFAQ
-This bot written in `python` makes use of a *machine learning* classifier to detect messages in a Discord channel which can be answered with a predefined FAQ.
+This bot written in `python` makes use of *machine learning* to detect messages in a Discord channel which can be answered with a predefined FAQ. 
+In order to achieve this, the bot uses **BERT** for natural language processing (**NLP**) to calculate sentence similarities between FAQ triggers and new posted messages. 
+Now, if the highest calculated metric for a message exceeds a threshold, the bot automatically reacts with a predefined answer corresponding to the trigger.
 
-# How it works
+If you are interested in BERT, here are 2 links for you:  
+Blog post: [BERT For Measuring Text Similarity](https://towardsdatascience.com/bert-for-measuring-text-similarity-eec91c6bf9e1)  
+Releasing paper: [Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks](https://arxiv.org/abs/1908.10084)  
+
+# Setup
 As the administrator, you first have to create an FAQ topic by using `/faq_enable`. Then, you can create FAQ entries with `/faq_add` and fill them with messages which should be automatically answered with your FAQ.
 
 # Commands
-| **Command**  | **Description**                                                                                                                                                                          | **Permission**     |
-|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|
-| /faq_enable  | Enables AutoFAQ for a Discord channel (and creates an FAQ topic).                                                                                                                        | use_slash_commands |
-| /faq_disable | Disables AutoFAQ for a Discord channel.                                                                                                                                                  | use_slash_commands |
-| /faq         | Shows all FAQ entries for a specific topic.                                                                                                                                              | use_slash_commands |
-| /faq_add     | Creates an FAQ entry for a specific topic.                                                                                                                                               | use_slash_commands |
-| /faq_edit    | Edits an FAQ entry for a specific topic.                                                                                                                                                 | use_slash_commands |
-| /faq_delete  | Deletes an FAQ entry for a specific topic.                                                                                                                                               | administrator      |
-| /faq_expand  | Searches for questions in a channel and then asks the administrator whether those messages should be ignored or added to the specific FAQ dataset. This process improves the classifier. | use_slash_commands |
-| /faq_reload  | Reloads every classifier for each topic.                                                                                                                                                 | use_slash_commands |
-| /save_chat   | Saves `n` messages to a file to improve the non-question dataset to ignore irrelevant messages.                                                                                          | administrator      |
+| **Command**  | **Description**                                                   | **Permission**     |
+|--------------|-------------------------------------------------------------------|--------------------|
+| /faq_help    | Displays the most relevant things to know for staff members.      | use_slash_commands |
+| /faq_enable  | Enables AutoFAQ for a Discord channel (and creates an FAQ topic). | use_slash_commands |
+| /faq_disable | Disables AutoFAQ for a Discord channel.                           | use_slash_commands |
+| /faq         | Shows all FAQ entries for a specific topic.                       | use_slash_commands |
+| /faq_add     | Creates an FAQ entry for a specific topic.                        | use_slash_commands |
+| /faq_edit    | Edits an FAQ entry for a specific topic.                          | use_slash_commands |
+| /faq_delete  | Deletes an FAQ entry for a specific topic.                        | administrator      |
+| /faq_reload  | Reloads every classifier for each topic.                          | use_slash_commands |
 
 # In-Chat Commands
 | **Command**                  | **With reference to another message** | **Description**                                                                                                | **Permission**     |
@@ -25,9 +30,11 @@ As the administrator, you first have to create an FAQ topic by using `/faq_enabl
 | @AutoFAQ ignore              | Yes                                   | Adds the referenced message to the ignore-dataset and deletes any old FAQ response referenced to that message. | use_slash_commands |
 
 # Requirements
-* Python installed
+* python installed
 * pip
 * a server to run this bot
+  * The bot requires at most times ~350MB RAM to load the classifier and 
+  * ~3GB disk space to be able to install required libraries.
 
 # Bot Installation
 1. Open the [Discord Developer Portal](https://discord.com/developers/applications)
