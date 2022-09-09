@@ -76,28 +76,6 @@ class FaqInfo(Cog):
             )
             await interaction.send(embed=embed, ephemeral=True)
 
-    @nextcord.slash_command(description="Saves the chat of the current channel to a file.",
-                            default_member_permissions=nextcord.Permissions(administrator=True), dm_permission=False)
-    async def save_chat(self, interaction: nextcord.Interaction, message_count: int) -> None:
-        if not isinstance(interaction.channel, nextcord.TextChannel):
-            return
-
-        response = await interaction.send(f"Loading chat history 0/{message_count}...", ephemeral=True)
-
-        content = []
-        count = 0
-        async for message in interaction.channel.history(limit=message_count):
-            content.append(message.content)
-
-            count += 1
-            if count % 250 == 0:
-                await response.edit(f"Loading chat history {count}/{message_count}...")
-
-        await response.edit(
-            f"Loading chat history {count}/{message_count}. Done.\nThe chat was saved in `chat_data.json`.")
-        data = ChatData()
-        data.apply(content)
-
 
 def setup(bot: Bot):
     bot.add_cog(FaqInfo(bot, core.faq.store))
