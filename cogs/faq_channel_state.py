@@ -26,10 +26,17 @@ class FaqChannel(Cog):
                              autocomplete=True,
                              autocomplete_callback=autocomplete_topic
                          )):
-        if not isinstance(interaction.channel, nextcord.TextChannel):
+        channel = interaction.channel
+
+        if isinstance(channel, nextcord.Thread):
+            thread: nextcord.Thread = channel
+            channel = thread.parent
+
+        if not isinstance(channel, nextcord.TextChannel) and not isinstance(channel, nextcord.ForumChannel):
+            await interaction.send(f"The channel type {type(channel.type)} is not supported. 🤔", ephemeral=True)
             return
 
-        old_topic = self.store.config.get_topic(interaction.channel)
+        old_topic = self.store.config.get_topic(channel)
         if old_topic:
             await interaction.send(
                 f"AutoFAQ with the topic *{old_topic}* is already activated in this channel. 🤔"
@@ -41,9 +48,9 @@ class FaqChannel(Cog):
 
         no_data = self.store.classifiers.get(topic) is None
 
-        if self.store.config.enable_channel(interaction.channel, topic):
-            log.info("AutoFAQ enabled for channel", f"'{interaction.channel.name}'",
-                     f"({interaction.channel.id}) in guild", f"'{interaction.guild.name}'",
+        if self.store.config.enable_channel(channel, topic):
+            log.info("AutoFAQ enabled for channel", f"'{channel.name}'",
+                     f"({channel.id}) in guild", f"'{interaction.guild.name}'",
                      f"({interaction.guild.id})", f"by {interaction.user.name}#{interaction.user.discriminator}.")
 
             if no_data:
@@ -60,9 +67,6 @@ class FaqChannel(Cog):
     @nextcord.slash_command(description="Disables the auto FAQ for the channel where this command will be executed.",
                             dm_permission=False)
     async def faq_disable(self, interaction: nextcord.Interaction):
-        if not isinstance(interaction.channel, nextcord.TextChannel):
-            return
-
         if self.store.config.disable_channel(interaction.channel):
             log.info("AutoFAQ disabled for channel", f"'{interaction.channel.name}'",
                      f"({interaction.channel.id}) in guild", f"'{interaction.guild.name}'",

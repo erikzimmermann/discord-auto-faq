@@ -50,23 +50,26 @@ class AutoFaq:
     def __load__(self):
         self.classifier = BertClassifier(self.data)
 
-    async def check_message(self, reply_on: nextcord.Message) -> (Optional[str], Optional[AutoResponseView]):
-        answer_id, p = self.classifier.predict(reply_on.content)
+    async def check_message(self, content: str, reply_on: nextcord.Message) -> bool:
+        answer_id, p = self.classifier.predict(content)
 
         if answer_id is None:
             # message classified as nonsense
-            log.info("Incoming message:", reply_on.content, "(nonsense" + (f", {round(p, 4)}" if p else "") + ")")
-            return
+            log.info("Incoming message:", content, "(nonsense" + (f", {round(p, 4)}" if p else "") + ")")
+            return False
 
         # change class index to answer_id
         entry = self.data.faq_entry(answer_id)
         threshold = self.calculate_threshold(answer_id)
 
-        log.info("Incoming message:", reply_on.content,
+        log.info("Incoming message:", content,
                  f"({entry.short()}, p={round(p, 4)}, threshold={threshold}, {p >= threshold})")
 
         if p >= threshold:
             await self.send_faq(reply_on, answer_id, entry.answer(), True)
+            return True
+        else:
+            return False
 
     async def send_faq(self, reply_on: nextcord.Message, answer_id: int, answer: str, allow_feedback: bool) -> None:
         if allow_feedback:

@@ -1,10 +1,14 @@
 import re
+from typing import Optional
 
 import nextcord
 from nextcord.ext import commands
 
 import core.classifier
+from core import magic
 from core.faq import Store, AutoFaq
+import time
+import datetime
 
 
 def get_role_position(user: nextcord.Member) -> int:
@@ -18,18 +22,89 @@ def has_permission(user: nextcord.Member) -> bool:
     return user.guild_permissions.use_slash_commands
 
 
+class ResponseLimiter:
+    def __init__(self, limit_in_sec: int = 10):
+        self.replies = dict()
+        self.limit_in_sec = limit_in_sec
+
+    def __remove_unnecessary__(self):
+        t = time.time()
+
+        discarding = []
+        for key in self.replies.keys():
+            last = self.replies[key]
+            if t - last >= self.limit_in_sec:
+                discarding.append(key)
+
+        for key in discarding:
+            self.replies.pop(key)
+
+    def check(self, user_id: int) -> bool:
+        self.__remove_unnecessary__()
+
+        last = self.replies.get(user_id)
+        t = time.time()
+
+        return last is None or t - last >= self.limit_in_sec
+
+    def add(self, user_id: int) -> None:
+        self.replies[user_id] = time.time()
+
+
 class FaqListener(commands.Cog):
     def __init__(self, bot: commands.Bot, store: Store):
         self.bot = bot
         self.store = store
+        self.limiter = ResponseLimiter()
+
+    @commands.Cog.listener()
+    async def on_thread_join(self, thread: nextcord.Thread):
+        parent = thread.parent
+
+        topic = self.store.config.get_topic(parent)
+        if not topic:
+            return
+
+        faq: AutoFaq = self.store.classifiers[topic]
+
+        message = None
+        async for m in thread.history(limit=2, oldest_first=True):
+            if message is not None:
+                # This thread is not recently created -> ignore
+                return
+            message = m
+
+        author: nextcord.Member = await thread.guild.fetch_member(message.author.id)
+
+        if message.author.bot or has_permission(author):
+            return
+
+        if not self.limiter.check(author.id):
+            return
+
+        if await faq.check_message(thread.name, message):
+            self.limiter.add(author.id)
 
     @commands.Cog.listener()
     async def on_message(self, message: nextcord.Message):
         if message.author.bot:
             return
 
-        topic = self.store.config.get_topic(message.channel)
+        channel = message.channel
+        if isinstance(channel, nextcord.Thread):
+            thread: nextcord.Thread = channel
+
+            created_at: Optional[datetime.datetime] = thread.created_at
+            if created_at is not None and time.time() - created_at.timestamp() <= magic.THREAD_MESSAGE_IGNORE_TIME:
+                return
+
+            channel = thread.parent
+
+        topic = self.store.config.get_topic(channel)
         if not topic:
+            return
+
+        if not self.limiter.check(message.author.id):
             return
 
         faq: AutoFaq = self.store.classifiers[topic]
@@ -51,7 +126,8 @@ class FaqListener(commands.Cog):
                 # just ignore message from staff members
                 pass
         else:
-            await faq.check_message(message)
+            if await faq.check_message(message.content, message):
+                self.limiter.add(message.author.id)
 
     async def process_add(self, topic: str, message: nextcord, short: str):
         ref: nextcord.MessageReference = message.reference
