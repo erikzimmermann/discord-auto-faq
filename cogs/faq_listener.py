@@ -93,11 +93,6 @@ class FaqListener(commands.Cog):
         channel = message.channel
         if isinstance(channel, nextcord.Thread):
             thread: nextcord.Thread = channel
-
-            created_at: Optional[datetime.datetime] = thread.created_at
-            if created_at is not None and time.time() - created_at.timestamp() <= magic.THREAD_MESSAGE_IGNORE_TIME:
-                return
-
             channel = thread.parent
 
         topic = self.store.config.get_topic(channel)
