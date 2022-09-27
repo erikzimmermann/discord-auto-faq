@@ -19,6 +19,7 @@ class FaqTest(Cog):
 
     @nextcord.slash_command(
         description="Allows staff to make predictions for custom messages.",
+        default_member_permissions=nextcord.Permissions(moderate_members=True),
         dm_permission=False)
     async def faq_test(self, interaction: nextcord.Interaction,
                        message: str = SlashOption(

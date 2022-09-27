@@ -78,13 +78,17 @@ class FaqConfig(Cog):
         self.bot = bot
         self.store = store
 
-    @nextcord.slash_command(description="Reloads the FAQ from its files.", dm_permission=False)
+    @nextcord.slash_command(
+        description="Reloads the FAQ from its files.",
+        default_member_permissions=nextcord.Permissions(moderate_members=True),
+        dm_permission=False)
     async def faq_reload(self, interaction: nextcord.Interaction):
         self.store.load_classifiers()
         log.info("All classifiers have been reloaded", f"by {interaction.user.name}#{interaction.user.discriminator}.")
         await interaction.send("The FAQ has been reloaded.", ephemeral=True)
 
     @nextcord.slash_command(description="Adds an automated answer to the FAQ.",
+                            default_member_permissions=nextcord.Permissions(moderate_members=True),
                             dm_permission=False)
     async def faq_add(self, interaction: nextcord.Interaction,
                       short: str = SlashOption(
@@ -135,6 +139,7 @@ class FaqConfig(Cog):
             await interaction.send(embed=embed, ephemeral=True)
 
     @nextcord.slash_command(description="Edits an FAQ entry.",
+                            default_member_permissions=nextcord.Permissions(moderate_members=True),
                             dm_permission=False)
     async def faq_edit(self, interaction: nextcord.Interaction,
                        topic: str = SlashOption(

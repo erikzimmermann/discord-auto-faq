@@ -1,14 +1,11 @@
 import re
-from typing import Optional
+import time
 
 import nextcord
 from nextcord.ext import commands
 
 import core.classifier
-from core import magic
 from core.faq import Store, AutoFaq
-import time
-import datetime
 
 
 def get_role_position(user: nextcord.Member) -> int:
@@ -19,7 +16,7 @@ def get_role_position(user: nextcord.Member) -> int:
 
 
 def has_permission(user: nextcord.Member) -> bool:
-    return user.guild_permissions.use_slash_commands
+    return user.guild_permissions.moderate_members
 
 
 class ResponseLimiter:

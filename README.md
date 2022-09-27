@@ -11,23 +11,23 @@ If you are interested in BERT, here are 2 links for you:
 As the administrator, you first have to create an FAQ topic by using `/faq_enable`. Then, you can create FAQ entries with `/faq_add` and fill them with messages which should be automatically answered with your FAQ.
 
 # Commands
-| **Command**  | **Description**                                                   | **Permission**     |
-|--------------|-------------------------------------------------------------------|--------------------|
-| /faq_help    | Displays the most relevant things to know for staff members.      | use_slash_commands |
-| /faq_enable  | Enables AutoFAQ for a Discord channel (and creates an FAQ topic). | use_slash_commands |
-| /faq_disable | Disables AutoFAQ for a Discord channel.                           | use_slash_commands |
-| /faq         | Shows all FAQ entries for a specific topic.                       | use_slash_commands |
-| /faq_add     | Creates an FAQ entry for a specific topic.                        | use_slash_commands |
-| /faq_edit    | Edits an FAQ entry for a specific topic.                          | use_slash_commands |
-| /faq_delete  | Deletes an FAQ entry for a specific topic.                        | administrator      |
-| /faq_reload  | Reloads every classifier for each topic.                          | use_slash_commands |
+| **Command**  | **Description**                                                   | **Permission**   |
+|--------------|-------------------------------------------------------------------|------------------|
+| /faq_help    | Displays the most relevant things to know for staff members.      | moderate_members |
+| /faq_enable  | Enables AutoFAQ for a Discord channel (and creates an FAQ topic). | moderate_members |
+| /faq_disable | Disables AutoFAQ for a Discord channel.                           | moderate_members |
+| /faq         | Shows all FAQ entries for a specific topic.                       | moderate_members |
+| /faq_add     | Creates an FAQ entry for a specific topic.                        | moderate_members |
+| /faq_edit    | Edits an FAQ entry for a specific topic.                          | moderate_members |
+| /faq_delete  | Deletes an FAQ entry for a specific topic.                        | administrator    |
+| /faq_reload  | Reloads every classifier for each topic.                          | moderate_members |
 
 # In-Chat Commands
-| **Command**                  | **With reference to another message** | **Description**                                                                                                | **Permission**     |
-|------------------------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------|--------------------|
-| @AutoFAQ \<faq-abbreviation> | Yes                                   | Posts the answer of your FAQ entry to the referenced message and adds the referenced message to your dataset.  | use_slash_commands |
-| @AutoFAQ \<faq-abbreviation> | No                                    | Posts the answer of your FAQ entry.                                                                            | use_slash_commands |
-| @AutoFAQ ignore              | Yes                                   | Adds the referenced message to the ignore-dataset and deletes any old FAQ response referenced to that message. | use_slash_commands |
+| **Command**                  | **With reference to another message** | **Description**                                                                                                | **Permission**   |
+|------------------------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------|------------------|
+| @AutoFAQ \<faq-abbreviation> | Yes                                   | Posts the answer of your FAQ entry to the referenced message and adds the referenced message to your dataset.  | moderate_members |
+| @AutoFAQ \<faq-abbreviation> | No                                    | Posts the answer of your FAQ entry.                                                                            | moderate_members |
+| @AutoFAQ ignore              | Yes                                   | Adds the referenced message to the ignore-dataset and deletes any old FAQ response referenced to that message. | moderate_members |
 
 # Requirements
 * python installed

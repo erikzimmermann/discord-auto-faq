@@ -13,6 +13,7 @@ class FaqHelp(Cog):
         self.store = store
 
     @nextcord.slash_command(description="Shows the abbreviations of every FAQ message.",
+                            default_member_permissions=nextcord.Permissions(moderate_members=True),
                             dm_permission=False)
     async def faq_help(self, interaction: nextcord.Interaction):
         embed = Embed(

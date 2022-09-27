@@ -18,6 +18,7 @@ class FaqChannel(Cog):
 
     @nextcord.slash_command(
         description="Enables the auto FAQ to listen to the channel where this command will be executed.",
+        default_member_permissions=nextcord.Permissions(moderate_members=True),
         dm_permission=False)
     async def faq_enable(self, interaction: nextcord.Interaction,
                          topic: str = SlashOption(
@@ -65,6 +66,7 @@ class FaqChannel(Cog):
             await interaction.send("AutoFAQ is already activated for this channel. 🤔", ephemeral=True)
 
     @nextcord.slash_command(description="Disables the auto FAQ for the channel where this command will be executed.",
+                            default_member_permissions=nextcord.Permissions(moderate_members=True),
                             dm_permission=False)
     async def faq_disable(self, interaction: nextcord.Interaction):
         if self.store.config.disable_channel(interaction.channel):
